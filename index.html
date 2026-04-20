@@ -9,6 +9,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Lemon Empire">
 <title>Lemon Empire 🍋</title>
+<link rel="manifest" href="manifest.json">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
@@ -5550,45 +5551,19 @@ function initEvents() {
 // ═══════════════════════════════════════════════
 
 function registerPWA() {
-  // Manifest via blob
-  const manifest = {
-    name: 'Lemon Empire',
-    short_name: 'LemonEmp',
-    description: 'A Lemonade Tycoon-style business simulation game',
-    start_url: '.',
-    display: 'standalone',
-    orientation: 'portrait',
-    background_color: '#FFFDE7',
-    theme_color: '#FFD700',
-    icons: [{
-      src: "data:image/svg+xml," + encodeURIComponent(`<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'><rect width='192' height='192' rx='32' fill='%23FFD700'/><text y='130' x='96' text-anchor='middle' font-size='120'>🍋</text></svg>`),
-      sizes: '192x192',
-      type: 'image/svg+xml'
-    }]
-  };
-  try {
-    const mBlob = new Blob([JSON.stringify(manifest)], { type:'application/manifest+json' });
-    const mUrl  = URL.createObjectURL(mBlob);
-    const link  = document.createElement('link');
-    link.rel = 'manifest'; link.href = mUrl;
-    document.head.appendChild(link);
-  } catch(e) {}
-
-  // Service worker via blob
-  if ('serviceWorker' in navigator) {
-    const swCode = `
-const CACHE='lemon-empire-v1';
-const ASSETS=[];
+  if (!('serviceWorker' in navigator)) return;
+  // On HTTPS (GitHub Pages / hosted): use real sw.js for proper caching + installability
+  // On file:// (local dev): fall back to blob SW
+  if (location.protocol === 'https:' || location.hostname === 'localhost') {
+    navigator.serviceWorker.register('./sw.js').catch(() => {});
+  } else {
+    // Blob fallback for offline file:// usage
+    const swCode = `const CACHE='lemon-empire-v2';
 self.addEventListener('install',e=>{self.skipWaiting();});
 self.addEventListener('activate',e=>{e.waitUntil(self.clients.claim());});
-self.addEventListener('fetch',e=>{
-  e.respondWith(fetch(e.request).catch(()=>{
-    return caches.match(e.request).then(r=>r||new Response('',{status:503}));
-  }));
-});`;
+self.addEventListener('fetch',e=>{e.respondWith(fetch(e.request).catch(()=>new Response('',{status:503})));});`;
     try {
-      const swBlob = new Blob([swCode], { type:'application/javascript' });
-      const swUrl  = URL.createObjectURL(swBlob);
+      const swUrl = URL.createObjectURL(new Blob([swCode],{type:'application/javascript'}));
       navigator.serviceWorker.register(swUrl).catch(()=>{});
     } catch(e) {}
   }
