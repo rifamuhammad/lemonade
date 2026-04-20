@@ -266,26 +266,6 @@ body {
   transition: width 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
-/* ── DAILY GOAL CARD ── */
-#goal-card {
-  border-left: 4px solid var(--orange);
-}
-#goal-text { font-size: 0.9rem; color: var(--navy); line-height: 1.4; }
-#goal-reward { font-size: 0.78rem; color: var(--green); font-weight: 700; margin-top: 4px; }
-
-/* ── RIVAL CARD ── */
-#rival-card {
-  background: linear-gradient(135deg, #fff3e0, #ffe0b2);
-  border: 1px solid #ffcc80;
-}
-.rival-row {
-  display: flex;
-  justify-content: space-between;
-  font-size: 0.83rem;
-  padding: 2px 0;
-}
-.rival-row span:first-child { color: var(--gray); }
-.rival-row span:last-child { font-weight: 700; }
 
 /* ── RECIPE BUILDER ── */
 #recipe-card {}
@@ -1760,22 +1740,6 @@ input[type="range"]::-moz-range-thumb {
   flex-shrink: 0;
 }
 
-/* Goal + rival row */
-.day-goal-text {
-  flex: 1;
-  font-size: 0.74rem;
-  color: rgba(255,255,255,0.8);
-  line-height: 1.3;
-}
-.day-rival-pill {
-  font-size: 0.72rem;
-  background: rgba(255,140,0,0.25);
-  color: var(--orange);
-  border-radius: 50px;
-  padding: 2px 9px;
-  flex-shrink: 0;
-  white-space: nowrap;
-}
 
 /* Inventory strip */
 .day-inv-strip {
@@ -2085,12 +2049,7 @@ input[type="range"]::-moz-range-thumb {
           </div>
           <span class="day-rep-val" id="day-rep-val">50/100</span>
         </div>
-        <!-- Row 3: Goal + Rival -->
-        <div class="day-hud-row">
-          <span class="day-goal-text">🎯 <span id="day-goal-text">Loading goal...</span> <span id="day-goal-reward" style="color:var(--orange)"></span></span>
-          <span class="day-rival-pill" id="day-rival-pill">👑 —</span>
-        </div>
-        <!-- Row 4: Inventory -->
+        <!-- Row 3: Inventory -->
         <div class="day-hud-row">
           <div class="day-inv-strip" id="day-inv-strip"></div>
         </div>
@@ -2160,7 +2119,6 @@ input[type="range"]::-moz-range-thumb {
         <span class="sell-info-chip" id="sell-weather-chip">☀️ Sunny</span>
         <span class="sell-info-chip accent" id="sell-rep-chip">⭐ 50</span>
         <span class="sell-info-chip" id="sell-stock-chip">🥤 0 cups</span>
-        <span class="sell-info-chip" id="sell-rival-chip">👑 —</span>
       </div>
       <!-- THE SCENE -->
       <div id="selling-scene">
@@ -2289,14 +2247,6 @@ input[type="range"]::-moz-range-thumb {
         <div class="result-row">
           <span class="lbl">Reputation</span>
           <span class="val rep-delta" id="result-rep-delta">+0</span>
-        </div>
-        <div class="result-row">
-          <span class="lbl">Daily Goal</span>
-          <span class="val" id="result-goal"></span>
-        </div>
-        <div class="result-row">
-          <span class="lbl">vs. Squeeze King</span>
-          <span class="val" id="result-rival"></span>
         </div>
       </div>
 
@@ -2568,7 +2518,6 @@ const ACHIEVEMENTS_DEF = [
   { id:'weatherproof',    name:'Weatherproof',       emoji:'☔', desc:'Turn a profit on a Rainy day' },
   // ── Mid game ──────────────────────────────
   { id:'sweet_spot',      name:'Sweet Spot',         emoji:'⭐', desc:'Achieve Amazing taste 3 days in a row' },
-  { id:'market_leader',   name:'Market Leader',      emoji:'👑', desc:'Beat the rival 5 days in a row' },
   { id:'festival_king',   name:'Festival King',      emoji:'🎪', desc:'Sell lemonade at Festival Grounds' },
   { id:'beach_bod',       name:'Beach Bod',          emoji:'🏖️', desc:'Sell 50+ cups in one day at the Beach' },
   { id:'price_master',    name:'Price Master',       emoji:'💲', desc:'Earn $20+ profit in a single day' },
@@ -2582,20 +2531,10 @@ const ACHIEVEMENTS_DEF = [
   { id:'month_survivor',  name:'Lemon Legend',        emoji:'🍋', desc:'Survive 30 days in business' },
   // ── Late game ─────────────────────────────
   { id:'empire_builder',  name:'Empire Builder',      emoji:'🏰', desc:'Purchase the Castle Stand' },
-  { id:'clean_sweep',     name:'Clean Sweep',         emoji:'🧹', desc:'Beat the rival AND sell out on the same day' },
   { id:'grossophobe',     name:'Zero Tolerance',      emoji:'🚫', desc:'Complete a day with zero Gross reactions' },
   { id:'reputation_max',  name:'Town Hero',           emoji:'🦸', desc:'Reach 95+ reputation' },
 ];
 
-const DAILY_GOALS = [
-  { id:'cups_20',    desc:'Sell 20+ cups today',               check: (r,S) => r.cupsSold >= 20,           reward: 10 },
-  { id:'profit_5',   desc:'Earn $5.00+ profit',                check: (r,S) => r.profit >= 5,              reward: 8  },
-  { id:'excellent',  desc:'Achieve Excellent taste or better',  check: (r,S) => r.tasteScore >= 0.80,       reward: 8  },
-  { id:'beat_rival', desc:'Outsell the Squeeze King',           check: (r,S) => r.beatRival,                reward: 12 },
-  { id:'cups_35',    desc:'Sell 35+ cups today',               check: (r,S) => r.cupsSold >= 35,           reward: 15 },
-  { id:'profit_15',  desc:'Earn $15.00+ profit',               check: (r,S) => r.profit >= 15,             reward: 20 },
-  { id:'no_rain',    desc:'Profit despite rainy weather',       check: (r,S) => S.currentWeather==='rainy' && r.profit > 0, reward: 15 },
-];
 
 const EVENTS = [
   { id:'festival', title:'🎡 Summer Festival!', desc:'Festival Grounds open today — 3× customers!', duration:1 },
@@ -2638,7 +2577,6 @@ function defaultState() {
     totalProfit: 0,
     bestDay: 0,
     allTimeCustomers: 0,
-    rivalStrength: 1,
     pendingEvent: null,
     activeEvent: null,
     activeEventDays: 0,
@@ -2646,12 +2584,9 @@ function defaultState() {
     currentLocation: 'sidewalk',
     recipe: { cupsToMake: 10, lemonsPerCup: 2, sugarPerCup: 2, icePerCup: 1 },
     price: 2.00,
-    consecutiveRivalWins: 0,
     consecutiveLegendary: 0,
     soldOutCount: 0,
     currentWeather: 'sunny',
-    dailyGoal: null,
-    rival: { quality: 0.5, price: 0.80, location: 'park' },
     marketPrices: { ...INGREDIENT_BASE },
     prevMarketPrices: { ...INGREDIENT_BASE },
     soundEnabled: true,
@@ -2691,7 +2626,6 @@ function _parseRaw(raw) {
   const ns = Object.assign(defaultState(), parsed);
   ns.inventory       = Object.assign({ lemons:0, sugar:0, cups:0, ice:0 }, parsed.inventory);
   ns.recipe          = Object.assign({ cupsToMake:10, lemonsPerCup:2, sugarPerCup:2, icePerCup:1 }, parsed.recipe);
-  ns.rival           = Object.assign({ quality:0.5, price:0.80, location:'park' }, parsed.rival);
   ns.marketPrices    = Object.assign({ ...INGREDIENT_BASE }, parsed.marketPrices);
   ns.prevMarketPrices= Object.assign({ ...INGREDIENT_BASE }, parsed.prevMarketPrices);
   ns.locationRep     = Object.assign({ sidewalk:50, park:50, beach:50, market:50, festival:50 }, parsed.locationRep);
@@ -2749,8 +2683,6 @@ function loadState() {
 function initNewGame() {
   S.currentWeather = pickWeather();
   refreshMarketPrices();
-  S.dailyGoal = pickDailyGoal();
-  generateRival();
 }
 
 // ── MAIN MENU ──────────────────────────────────
@@ -3029,7 +2961,6 @@ const SFX = {
   dayOpen()    { [392,494,587,740].forEach((f,i)=>playTone({type:'triangle',freq:f,duration:0.2,gain:0.18,startDelay:i*0.08})); },
   weatherAlert(){ playTone({type:'triangle',freq:660,duration:0.12,gain:0.18}); playTone({type:'triangle',freq:440,duration:0.15,gain:0.14,startDelay:0.14}); },
   locationPick(){ playTone({type:'triangle',freq:587,duration:0.09,gain:0.15}); playTone({type:'triangle',freq:784,duration:0.12,gain:0.15,startDelay:0.1}); },
-  goalMet()    { [523,659,784,1047].forEach((f,i)=>playTone({freq:f,duration:0.2,gain:0.22,startDelay:i*0.09})); },
   error()      { playTone({freq:280,duration:0.15,gain:0.25}); playTone({freq:220,duration:0.18,gain:0.22,startDelay:0.12}); },
 };
 
@@ -3256,19 +3187,6 @@ function pickWeather() {
   return 'sunny';
 }
 
-function pickDailyGoal() {
-  return DAILY_GOALS[Math.floor(Math.random() * DAILY_GOALS.length)];
-}
-
-function generateRival() {
-  const locs = Object.keys(LOCATIONS).filter(k => k !== 'festival');
-  S.rival = {
-    quality: 0.3 + Math.random() * 0.5,
-    price: 0.4 + Math.random() * 1.5,
-    location: locs[Math.floor(Math.random() * locs.length)],
-  };
-}
-
 function refreshMarketPrices() {
   // Prices are fixed — they always match the small-bundle per-unit rate
   S.marketPrices     = { ...INGREDIENT_BASE };
@@ -3416,17 +3334,8 @@ function calcDemand(recipe, price, tasteScore) {
   const tl = tasteLabel(tasteScore);
   const tasteBonus = tl.mult;
 
-  // Rival penalty
-  let rivalPenalty = 1.0;
-  if (S.rival.location === S.currentLocation) {
-    const ourVal   = tasteScore / Math.max(0.1, price);
-    const rivalVal = S.rival.quality / Math.max(0.1, S.rival.price);
-    const stealRate = 0.10 + (S.rivalStrength - 1) * 0.02;
-    if (rivalVal > ourVal) rivalPenalty = 1 - Math.min(0.35, stealRate * (rivalVal / ourVal));
-  }
-
   const weatherMult = w ? w.mult : 1.0;
-  const raw = baseCust * weatherMult * priceSensitivity * repBonus * tasteBonus * rivalPenalty;
+  const raw = baseCust * weatherMult * priceSensitivity * repBonus * tasteBonus;
   return Math.max(0, Math.round(raw * eff.autoDispenser));
 }
 
@@ -3444,13 +3353,7 @@ function calcIngredientCost(recipe, cups) {
   return Math.round(raw * 100) / 100;
 }
 
-function calcBeatRival(ourTaste, ourPrice) {
-  const ourVal   = ourTaste / Math.max(0.1, ourPrice);
-  const rivalVal = S.rival.quality / Math.max(0.1, S.rival.price);
-  return ourVal >= rivalVal;
-}
-
-function calcRepDelta(tasteScore, cupsSold, cupsToMake, beatRival) {
+function calcRepDelta(tasteScore, cupsSold, cupsToMake) {
   const eff = upgradeEffects();
   let delta = 0;
   if      (tasteScore >= 0.85) delta += 5;   // Amazing
@@ -3460,7 +3363,6 @@ function calcRepDelta(tasteScore, cupsSold, cupsToMake, beatRival) {
   if (cupsSold >= cupsToMake) delta += 2;
   else if ((cupsToMake - cupsSold) / cupsToMake > 0.3) delta -= 1;
 
-  if (beatRival) delta += 2;
   delta += eff.extraRep;
   return delta;
 }
@@ -3474,10 +3376,8 @@ function simulateSelling() {
   const cost        = calcIngredientCost(recipe, cupsSold); // cost of goods sold only
   const rent        = LOCATIONS[S.currentLocation]?.rent || 0;
   const profit      = revenue - cost - rent;
-  const beatRival   = calcBeatRival(tasteScore, price);
-  const repDelta    = calcRepDelta(tasteScore, cupsSold, recipe.cupsToMake, beatRival);
-  const goalMet     = S.dailyGoal ? S.dailyGoal.check({ tasteScore, demand, cupsSold, revenue, cost, profit, beatRival }, S) : false;
-  return { tasteScore, demand, cupsSold, revenue, cost, rent, profit, beatRival, repDelta, goalMet };
+  const repDelta    = calcRepDelta(tasteScore, cupsSold, recipe.cupsToMake);
+  return { tasteScore, demand, cupsSold, revenue, cost, rent, profit, repDelta };
 }
 
 function applyDayResults(result) {
@@ -3496,10 +3396,9 @@ function applyDayResults(result) {
   // Franchise passive income
   const bonus = eff.franchiseIncome;
 
-  const goalBonus = result.goalMet ? (S.dailyGoal ? S.dailyGoal.reward : 0) : 0;
   // Ingredient cost was already paid at the market — only add revenue minus rent
   // result.profit (revenue - cost - rent) is tracked for achievements/stats but NOT added to coins again
-  S.coins       += result.revenue - result.rent + bonus + goalBonus;
+  S.coins       += result.revenue - result.rent + bonus;
   S.totalProfit += result.profit;  // true economic profit for milestone tracking
   if (result.profit > S.bestDay) S.bestDay = result.profit;
   S.allTimeCustomers += result.cupsSold;
@@ -3518,8 +3417,6 @@ function applyDayResults(result) {
   if (S.locationHistory.length > 7) S.locationHistory.shift();
 
   if (result.cupsSold >= recipe.cupsToMake) S.soldOutCount++;
-  if (result.beatRival) { S.consecutiveRivalWins++; }
-  else { S.consecutiveRivalWins = 0; }
 
   if (result.tasteScore >= 0.95) { S.consecutiveLegendary++; }
   else { S.consecutiveLegendary = 0; }
@@ -3579,20 +3476,7 @@ function advanceDay() {
   }
 
   S.currentWeather = pickWeather();
-  S.dailyGoal = pickDailyGoal();
   refreshMarketPrices();
-  generateRival();
-
-  // Every 7 days rival gets stronger
-  if (S.day % 7 === 0) {
-    S.rivalStrength = Math.min(10, S.rivalStrength + 1);
-  }
-
-  // Move rival away from festival if no event
-  if (!S.activeEvent && S.rival.location === 'festival') {
-    const locs = Object.keys(LOCATIONS).filter(k => k !== 'festival');
-    S.rival.location = locs[Math.floor(Math.random() * locs.length)];
-  }
 
   saveState();
 }
@@ -3611,7 +3495,6 @@ function checkAchievements(result) {
     { id:'weatherproof',    cond: S.currentWeather === 'rainy' && result.profit > 0 },
     // Mid game
     { id:'sweet_spot',      cond: S.consecutiveLegendary >= 3 },
-    { id:'market_leader',   cond: S.consecutiveRivalWins >= 5 },
     { id:'festival_king',   cond: S.currentLocation === 'festival' && result.cupsSold > 0 },
     { id:'beach_bod',       cond: S.currentLocation === 'beach' && result.cupsSold >= 50 },
     { id:'price_master',    cond: result.profit >= 20 },
@@ -3625,7 +3508,6 @@ function checkAchievements(result) {
     { id:'month_survivor',  cond: S.day >= 30 },
     // Late game
     { id:'empire_builder',  cond: (S.standTier || 0) >= 3 },
-    { id:'clean_sweep',     cond: soldOut && result.beatRival },
     { id:'grossophobe',     cond: result.cupsSold >= 5 && (rx.gross || 0) === 0 },
     { id:'reputation_max',  cond: S.reputation >= 95 },
   ];
@@ -3701,12 +3583,9 @@ function showErrorToast(msg, dur) {
 function updateSellInfoBar() {
   const w   = WEATHER.find(x => x.id === S.currentWeather) || WEATHER[0];
   const eff = upgradeEffects();
-  const r   = S.rival;
-  const rloc = LOCATIONS[r.location];
   document.getElementById('sell-weather-chip').textContent = `${w.emoji} ${w.label.replace(/^[^\s]+\s/, '')}`;
   document.getElementById('sell-rep-chip').textContent     = `⭐ ${S.reputation} rep`;
   document.getElementById('sell-stock-chip').textContent   = `🥤 ${S.recipe.cupsToMake} cups`;
-  document.getElementById('sell-rival-chip').textContent   = `👑 ${rloc ? rloc.emoji : ''} ${fmt(r.price)}`;
 }
 
 function startDayProgressBar(durationMs) {
@@ -3857,17 +3736,6 @@ function renderDayHud() {
   const pct = Math.min(100, (S.reputation / eff.maxRep) * 100);
   document.getElementById('day-rep-fill').style.width = pct + '%';
   document.getElementById('day-rep-val').textContent = S.reputation + '/' + eff.maxRep;
-
-  // Goal
-  if (!S.dailyGoal) S.dailyGoal = pickDailyGoal();
-  document.getElementById('day-goal-text').textContent = S.dailyGoal.desc;
-  document.getElementById('day-goal-reward').textContent = '· +' + S.dailyGoal.reward + '🪙';
-
-  // Rival pill
-  const r = S.rival;
-  const rloc = LOCATIONS[r.location];
-  document.getElementById('day-rival-pill').textContent =
-    `👑 ${rloc ? rloc.emoji : ''} ${fmt(r.price)}`;
 
   // Inventory chips
   const strip = document.getElementById('day-inv-strip');
@@ -4847,7 +4715,7 @@ function _endSellingDay(ss) {
   // Extra rep penalties from customer expressions
   const priceyPenalty = Math.floor((ss.priceyCount || 0) / 3);
   const yuckPenalty   = Math.floor((ss.yuckServed  || 0) / 2);
-  const baseRepDelta  = calcRepDelta(pr.tasteScore, ss.actualServed, ss.cupsToMake, pr.beatRival);
+  const baseRepDelta  = calcRepDelta(pr.tasteScore, ss.actualServed, ss.cupsToMake);
   // Cost of goods sold = only what was actually served (not pre-planned cupsToMake)
   const cost = calcIngredientCost(S.recipe, ss.actualServed);
   // Ad spend was already deducted from coins when hired — include here for display only
@@ -4863,18 +4731,6 @@ function _endSellingDay(ss) {
     repDelta: Math.max(-20, baseRepDelta - priceyPenalty - yuckPenalty),
     rx:       { ...ss.rx },
   };
-  actualResult.goalMet = S.dailyGoal
-    ? S.dailyGoal.check({
-        tasteScore: pr.tasteScore,
-        demand:     ss.demand,
-        cupsSold:   actualResult.cupsSold,
-        revenue:    actualResult.revenue,
-        cost:       actualResult.cost,
-        profit:     actualResult.profit,
-        beatRival:  pr.beatRival,
-      }, S)
-    : false;
-
   const delay = soldOut ? 2400 : 1600;
   setTimeout(() => finishSelling(actualResult), delay);
 }
@@ -4892,7 +4748,6 @@ function finishSelling(result) {
   } else {
     SFX.coin();
   }
-  if (result.goalMet) setTimeout(() => SFX.goalMet(), 600);
 
   // Coin burst from top-bar
   const coinEl = document.getElementById('coin-display');
@@ -4944,26 +4799,11 @@ function renderResult(result) {
   rd.textContent = (result.repDelta >= 0 ? '+' : '') + result.repDelta + ' rep';
   rd.className = 'rep-delta ' + (result.repDelta >= 0 ? 'pos' : 'neg');
 
-  const goalEl = document.getElementById('result-goal');
-  if (result.goalMet) {
-    goalEl.innerHTML = '<span class="goal-badge met">✅ Goal Met! +' + (S.dailyGoal ? S.dailyGoal.reward : 0) + ' coins</span>';
-  } else {
-    goalEl.innerHTML = '<span class="goal-badge missed">❌ Not met</span>';
-  }
-
-  const rivalEl = document.getElementById('result-rival');
-  rivalEl.textContent = result.beatRival ? '✅ You won!' : '❌ They won';
-  rivalEl.style.color = result.beatRival ? 'var(--green-dark)' : 'var(--red)';
-
   // Event bonus card
   const bonusCard = document.getElementById('result-event-bonus');
   if (S.franchiseIncome > 0) {
     bonusCard.style.display = 'block';
     document.getElementById('result-event-text').textContent = '🏆 Franchise stand earned ' + fmt(S.franchiseIncome) + ' passive income!';
-  } else if (result.goalMet) {
-    bonusCard.style.display = 'block';
-    bonusCard.style.background = 'linear-gradient(135deg,#e8f5e9,#c8e6c9)';
-    document.getElementById('result-event-text').textContent = '🎯 Daily goal smashed! Bonus coins awarded!';
   } else {
     bonusCard.style.display = 'none';
   }
