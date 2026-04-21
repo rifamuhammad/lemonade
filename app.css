@@ -408,7 +408,7 @@ input[type="range"]::-moz-range-thumb {
 .loc-btn .loc-info { font-size: 0.58rem; color: var(--gray); display: block; }
 .loc-btn.selected { border-color: var(--orange); background: #fff3e0; }
 .loc-btn.locked { opacity: 0.45; cursor: not-allowed; }
-.loc-btn.locked .loc-name::after { content: ' ??'; }
+.loc-btn.locked .loc-name::after { content: ' 🔒'; }
 
 /* -- OPEN STAND BUTTON -- */
 #open-stand-btn {

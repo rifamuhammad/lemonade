@@ -489,7 +489,7 @@ function _disappointEl(el, ss, reason) {
   const bubble = document.createElement('div');
   const bubbleText = reason === 'price' ? '💸 Too pricey!'
     : reason === 'stock' ? '😢 Sold out!'
-    : 'â° Too long!';
+    : '⏰ Too long!';
   bubble.style.cssText = `position:absolute;left:${bx}px;bottom:90px;font-size:0.78rem;z-index:20;pointer-events:none;animation:scenePopUp 1.0s forwards;white-space:nowrap;background:white;padding:2px 6px;border-radius:8px;box-shadow:0 2px 5px rgba(0,0,0,0.18);font-family:sans-serif;`;
   bubble.textContent = bubbleText;
   container.appendChild(bubble);

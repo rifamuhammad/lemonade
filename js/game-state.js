@@ -378,12 +378,12 @@ function renderSlots() {
         <div class="slot-coins" style="color:${coinsCol}">💰 $${info.coins.toFixed(2)}</div>
         <div class="slot-details">
           <span class="slot-detail-chip">🏆 $${info.totalProfit.toFixed(0)} total</span>
-          <span class="slot-detail-chip">? ${info.upgrades} upgrades</span>
+          <span class="slot-detail-chip">🧰 ${info.upgrades} upgrades</span>
         </div>
         ${dateStr ? `<div class="slot-date">Saved ${dateStr}</div>` : ''}
         <div class="slot-actions">
           ${_slotsMode === 'load'
-            ? `<button class="slot-btn slot-load-btn" data-slotaction="load" data-slotidx="${idx}">? Load</button>`
+            ? `<button class="slot-btn slot-load-btn" data-slotaction="load" data-slotidx="${idx}">▶ Load</button>`
             : `<button class="slot-btn slot-over-btn" data-slotaction="overwrite" data-slotidx="${idx}">⚠️ Overwrite</button>`}
           <button class="slot-btn slot-del-btn" data-slotaction="delete" data-slotidx="${idx}" title="Delete">🗑️</button>
         </div>
@@ -392,7 +392,7 @@ function renderSlots() {
       return `<div class="slot-card slot-empty">
         <div class="slot-num">${num}</div>
         <div class="slot-empty-label">— Empty —</div>
-        <button class="slot-btn slot-new-btn" data-slotaction="new" data-slotidx="${idx}" style="width:100%">? Start Here</button>
+        <button class="slot-btn slot-new-btn" data-slotaction="new" data-slotidx="${idx}" style="width:100%">🍋 Start Here</button>
       </div>`;
     }
   }).join('');
@@ -464,13 +464,13 @@ const TUTORIAL_STEPS = [
     emoji: '💰',
     title: 'Set Your Price',
     text: 'Use the price slider to choose how much to charge. Price too high and customers walk away. Price too low and you won\'t profit!',
-    art: 'Cost per cup: ~$0.35\nCharge $0.75 -> profit ✅\nCharge $5.00 -> nobody buys âŒ',
+    art: 'Cost per cup: ~$0.35\nCharge $0.75 -> profit ✅\nCharge $5.00 -> nobody buys ❌',
   },
   {
     emoji: '📍',
     title: 'Pick Your Location',
     text: 'Different spots bring different crowds. The Sidewalk is free but quiet. The Beach is busy but costs rent. Unlock new spots as you earn!',
-    art: '🏘️ Sidewalk - 15 customers, free\n🌳 Park     - 25 customers, $5 rent\n🏖️ Beach    - 40 customers, $12 rent',
+    art: '🏘️ Sidewalk - 18 customers, free\n🌳 Park     - 28 customers, $5 rent\n🏖️ Beach    - 40 customers, $12 rent',
   },
   {
     emoji: '🏪',
@@ -523,7 +523,7 @@ function renderTutStep() {
   const prevBtn = document.getElementById('tut-prev');
   const nextBtn = document.getElementById('tut-next');
   prevBtn.style.display = _tutStep === 0 ? 'none' : '';
-  nextBtn.textContent   = _tutStep === total - 1 ? '🍋 Let\'s Go!' : 'Next â†’';
+  nextBtn.textContent   = _tutStep === total - 1 ? '🍋 Let\'s Go!' : 'Next →';
 }
 
 
