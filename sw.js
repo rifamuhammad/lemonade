@@ -1,10 +1,23 @@
-const CACHE = 'lemon-empire-v2';
+const CACHE = 'lemon-empire-v4';
 const ASSETS = [
   './',
   './index.html',
+  './app.css',
+  './app.js',
+  './js/game-state.js',
+  './js/game-audio.js',
+  './js/game-economy.js',
+  './js/game-ui.js',
+  './js/game-simulation.js',
   './manifest.json',
   './icon-192.png',
-  './icon-512.png'
+  './icon-512.png',
+  './vendor/js/chart.umd.min.js',
+  './vendor/fonts/google-fonts.css',
+  './vendor/fonts/fredoka-one-400.ttf',
+  './vendor/fonts/nunito-400.ttf',
+  './vendor/fonts/nunito-600.ttf',
+  './vendor/fonts/nunito-700.ttf'
 ];
 
 self.addEventListener('install', e => {
