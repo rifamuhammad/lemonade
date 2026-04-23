@@ -476,11 +476,11 @@ function renderShop() {
       const owned  = !!S.upgrades[u.id];
       const canBuy = !owned && S.coins >= u.cost;
       html += `<div class="upgrade-card ${owned ? 'owned' : ''}">
-        <span class="ug-emoji">${u.emoji}</span>
+        <div class="ug-icon">${_getUpgradeIcon(u.id)}</div>
         <div class="ug-info">
           <div class="ug-name">${u.name}</div>
           <div class="ug-desc">${u.desc}</div>
-          <div style="font-size:0.7rem;color:var(--orange);margin-top:3px;font-weight:700">${fmt(u.cost)}</div>
+          <div style="font-size:0.72rem;color:var(--orange);margin-top:4px;font-weight:700">${fmt(u.cost)}</div>
         </div>
         ${owned
           ? '<span class="ug-owned-badge">✅ Owned</span>'
@@ -557,6 +557,466 @@ function hireDailyAd(id) {
   saveState();
   renderShop();
   updateTopBar();
+  _playAdEffect(id);   // fire the visual celebration for this ad
+}
+
+// ── UPGRADE SVG ICONS ────────────────────────────────────────────────────────
+// Returns an inline SVG illustration for each equipment upgrade ID.
+function _getUpgradeIcon(id) {
+  const svgs = {
+
+    juicer: `<svg viewBox="0 0 56 56" width="52" height="52" xmlns="http://www.w3.org/2000/svg">
+      <!-- collection jar body -->
+      <rect x="11" y="36" width="34" height="16" rx="5" fill="#E3F2FD" stroke="#64B5F6" stroke-width="1.5"/>
+      <!-- juice inside jar -->
+      <rect x="12" y="43" width="32" height="8" rx="4" fill="#FFD740" opacity="0.75"/>
+      <!-- drip channel -->
+      <rect x="24" y="30" width="8" height="8" rx="3" fill="#FFD740"/>
+      <!-- squeezer cone -->
+      <polygon points="28,10 13,30 43,30" fill="#FFA726"/>
+      <!-- cone ribs -->
+      <line x1="28" y1="11" x2="20" y2="30" stroke="#FF8C00" stroke-width="1.2"/>
+      <line x1="28" y1="11" x2="28" y2="30" stroke="#FF8C00" stroke-width="1.2"/>
+      <line x1="28" y1="11" x2="36" y2="30" stroke="#FF8C00" stroke-width="1.2"/>
+      <!-- lemon half sitting on top -->
+      <ellipse cx="28" cy="10" rx="10" ry="6" fill="#FFD740"/>
+      <path d="M18,10 a10,6 0 0,0 20,0" fill="#FFF59D" opacity="0.8"/>
+      <!-- lemon pip/seed dots -->
+      <circle cx="24" cy="9" r="1.2" fill="#FF8C00"/>
+      <circle cx="28" cy="9" r="1.2" fill="#FF8C00"/>
+      <circle cx="32" cy="9" r="1.2" fill="#FF8C00"/>
+      <!-- handle bars -->
+      <rect x="3"  y="21" width="12" height="5" rx="2.5" fill="#795548"/>
+      <rect x="41" y="21" width="12" height="5" rx="2.5" fill="#795548"/>
+      <circle cx="4"  cy="23" r="2.5" fill="#5D4037"/>
+      <circle cx="52" cy="23" r="2.5" fill="#5D4037"/>
+    </svg>`,
+
+    canopy: `<svg viewBox="0 0 56 56" width="52" height="52" xmlns="http://www.w3.org/2000/svg">
+      <defs><clipPath id="ugCanopyClip"><path d="M4,30 Q28,4 52,30 Z"/></clipPath></defs>
+      <!-- main canopy arc filled orange -->
+      <path d="M4,30 Q28,4 52,30 Z" fill="#FF8C00"/>
+      <!-- white stripe wedges clipped inside arc -->
+      <rect x="6"  y="0" width="5" height="32" fill="#FFF" clip-path="url(#ugCanopyClip)"/>
+      <rect x="17" y="0" width="5" height="32" fill="#FFF" clip-path="url(#ugCanopyClip)"/>
+      <rect x="28" y="0" width="5" height="32" fill="#FFF" clip-path="url(#ugCanopyClip)"/>
+      <rect x="39" y="0" width="5" height="32" fill="#FFF" clip-path="url(#ugCanopyClip)"/>
+      <!-- scalloped fringe row -->
+      <path d="M4,30 Q28,4 52,30" fill="none" stroke="#E65100" stroke-width="2"/>
+      <ellipse cx="7"  cy="30" rx="3" ry="4" fill="#FFD740"/>
+      <ellipse cx="13" cy="31" rx="3" ry="4" fill="#FFD740"/>
+      <ellipse cx="19" cy="31" rx="3" ry="4" fill="#FFD740"/>
+      <ellipse cx="25" cy="31" rx="3" ry="4" fill="#FFD740"/>
+      <ellipse cx="31" cy="31" rx="3" ry="4" fill="#FFD740"/>
+      <ellipse cx="37" cy="31" rx="3" ry="4" fill="#FFD740"/>
+      <ellipse cx="43" cy="31" rx="3" ry="4" fill="#FFD740"/>
+      <ellipse cx="49" cy="30" rx="3" ry="4" fill="#FFD740"/>
+      <!-- vertical centre pole -->
+      <rect x="26" y="30" width="4" height="22" rx="2" fill="#795548"/>
+      <rect x="14" y="50" width="28" height="4" rx="2" fill="#5D4037"/>
+      <!-- finial spike at top -->
+      <polygon points="28,2 25,11 31,11" fill="#FFD740"/>
+    </svg>`,
+
+    powerjuicer: `<svg viewBox="0 0 56 56" width="52" height="52" xmlns="http://www.w3.org/2000/svg">
+      <!-- motor base -->
+      <rect x="10" y="38" width="36" height="14" rx="6" fill="#455A64"/>
+      <!-- speed buttons -->
+      <rect x="13" y="42" width="7"  height="6" rx="2" fill="#EF5350"/>
+      <rect x="22" y="42" width="7"  height="6" rx="2" fill="#FFCA28"/>
+      <rect x="31" y="42" width="7"  height="6" rx="2" fill="#66BB6A"/>
+      <rect x="40" y="42" width="5"  height="6" rx="2" fill="#29B6F6"/>
+      <!-- blender jar trapezoid -->
+      <path d="M15,14 L12,38 L44,38 L41,14 Z" fill="#B3E5FC" stroke="#42A5F5" stroke-width="1.5"/>
+      <!-- yellow lemonade fill -->
+      <path d="M15.8,22 L13,38 L43,38 L40.2,22 Z" fill="#FFD740" opacity="0.75"/>
+      <!-- swirl/blade indicator -->
+      <ellipse cx="28" cy="37" rx="11" ry="3" fill="#78909C" opacity="0.5"/>
+      <line x1="17" y1="37" x2="39" y2="37" stroke="#546E7A" stroke-width="2"/>
+      <line x1="21" y1="34" x2="35" y2="40" stroke="#546E7A" stroke-width="2"/>
+      <!-- bubbles inside jar -->
+      <circle cx="21" cy="28" r="2"   fill="#FFF" opacity="0.55"/>
+      <circle cx="31" cy="25" r="1.5" fill="#FFF" opacity="0.55"/>
+      <circle cx="27" cy="31" r="1"   fill="#FFF" opacity="0.55"/>
+      <!-- lid -->
+      <rect x="18" y="10" width="20" height="6" rx="3" fill="#37474F"/>
+      <circle cx="28" cy="10" r="3" fill="#546E7A"/>
+      <!-- lightning bolt badge -->
+      <polygon points="50,4 43,20 47,20 40,36 52,16 47,16" fill="#FFD740" stroke="#FF8C00" stroke-width="0.8"/>
+    </svg>`,
+
+    register: `<svg viewBox="0 0 56 56" width="52" height="52" xmlns="http://www.w3.org/2000/svg">
+      <!-- main body -->
+      <rect x="5"  y="18" width="46" height="30" rx="5" fill="#37474F"/>
+      <!-- display housing -->
+      <rect x="8"  y="6"  width="40" height="15" rx="3" fill="#263238"/>
+      <!-- screen glow -->
+      <rect x="10" y="8"  width="36" height="11" rx="2" fill="#00E5FF" opacity="0.2"/>
+      <rect x="10" y="8"  width="36" height="11" rx="2" fill="#00ACC1" opacity="0.35"/>
+      <!-- screen text -->
+      <text x="28" y="17" font-size="7.5" text-anchor="middle" fill="#E0F7FA" font-weight="bold">$8.50</text>
+      <!-- keypad rows -->
+      <rect x="9"  y="26" width="7" height="5" rx="1.5" fill="#546E7A"/>
+      <rect x="18" y="26" width="7" height="5" rx="1.5" fill="#546E7A"/>
+      <rect x="27" y="26" width="7" height="5" rx="1.5" fill="#546E7A"/>
+      <rect x="9"  y="33" width="7" height="5" rx="1.5" fill="#546E7A"/>
+      <rect x="18" y="33" width="7" height="5" rx="1.5" fill="#546E7A"/>
+      <rect x="27" y="33" width="7" height="5" rx="1.5" fill="#4CAF50"/>
+      <!-- tall enter key -->
+      <rect x="36" y="26" width="11" height="12" rx="2" fill="#4CAF50"/>
+      <text x="41.5" y="35" font-size="7" text-anchor="middle" fill="#FFF" font-weight="bold">↵</text>
+      <!-- cash drawer -->
+      <rect x="5"  y="44" width="46" height="8" rx="3" fill="#1C313A"/>
+      <!-- drawer handle bar -->
+      <rect x="18" y="46" width="20" height="3" rx="1.5" fill="#78909C"/>
+      <!-- coins visible in drawer -->
+      <circle cx="9"  cy="48" r="2.2" fill="#FFD740"/>
+      <circle cx="14" cy="48" r="2.2" fill="#FFD740"/>
+      <circle cx="45" cy="48" r="2.2" fill="#FFD740"/>
+      <circle cx="50" cy="48" r="2.2" fill="#C0C0C0"/>
+    </svg>`,
+
+    fridge: `<svg viewBox="0 0 56 56" width="52" height="52" xmlns="http://www.w3.org/2000/svg">
+      <!-- body shadow -->
+      <rect x="9" y="5" width="38" height="48" rx="6" fill="#B0BEC5" opacity="0.4"/>
+      <!-- main body -->
+      <rect x="8" y="4" width="38" height="48" rx="6" fill="#ECEFF1"/>
+      <rect x="8" y="4" width="38" height="48" rx="6" fill="none" stroke="#B0BEC5" stroke-width="1.5"/>
+      <!-- divider line -->
+      <line x1="8" y1="26" x2="46" y2="26" stroke="#90A4AE" stroke-width="1.5"/>
+      <!-- freezer handle -->
+      <rect x="38" y="10" width="5" height="10" rx="2.5" fill="#90A4AE"/>
+      <!-- fridge handle -->
+      <rect x="38" y="30" width="5" height="18" rx="2.5" fill="#90A4AE"/>
+      <!-- freezer interior hint -->
+      <rect x="11" y="7" width="26" height="17" rx="4" fill="#E3F2FD" opacity="0.6"/>
+      <!-- snowflake icon in freezer -->
+      <text x="22" y="18" font-size="11" text-anchor="middle">❄️</text>
+      <!-- fridge contents -->
+      <rect x="11" y="28" width="26" height="21" rx="4" fill="#F9FBE7" opacity="0.7"/>
+      <circle cx="18" cy="36" r="4" fill="#FFD740"/>
+      <circle cx="28" cy="36" r="3.5" fill="#A5D6A7"/>
+      <circle cx="37" cy="36" r="3" fill="#EF9A9A"/>
+      <rect x="14" y="42" width="26" height="3" rx="1.5" fill="#DCEDC8"/>
+      <!-- temp indicator light -->
+      <circle cx="12" cy="47" r="2.5" fill="#42A5F5" opacity="0.8"/>
+    </svg>`,
+
+    iceomatic: `<svg viewBox="0 0 56 56" width="52" height="52" xmlns="http://www.w3.org/2000/svg">
+      <!-- machine body -->
+      <rect x="7" y="6" width="42" height="40" rx="7" fill="#0D47A1"/>
+      <!-- face panel -->
+      <rect x="11" y="10" width="34" height="28" rx="5" fill="#1565C0"/>
+      <!-- display window glass -->
+      <rect x="14" y="12" width="22" height="14" rx="3" fill="#E3F2FD"/>
+      <!-- ice cubes in window -->
+      <rect x="16" y="14" width="8" height="8" rx="1.5" fill="#B3E5FC" stroke="#90CAF9" stroke-width="0.8"/>
+      <rect x="26" y="14" width="8" height="8" rx="1.5" fill="#B3E5FC" stroke="#90CAF9" stroke-width="0.8"/>
+      <rect x="16" y="19" width="8" height="6" rx="1"   fill="#E1F5FE" opacity="0.5"/>
+      <rect x="26" y="19" width="8" height="6" rx="1"   fill="#E1F5FE" opacity="0.5"/>
+      <!-- brand label -->
+      <rect x="38" y="12" width="5" height="14" rx="2" fill="#1A237E"/>
+      <text x="40.5" y="21" font-size="4.5" text-anchor="middle" fill="#90CAF9" font-weight="bold">ICE</text>
+      <!-- dispense nozzle -->
+      <rect x="20" y="28" width="16" height="8" rx="3" fill="#0D47A1"/>
+      <rect x="23" y="34" width="10" height="4" rx="1.5" fill="#B3E5FC"/>
+      <!-- output tray -->
+      <rect x="11" y="42" width="34" height="8" rx="4" fill="#0A3364"/>
+      <!-- ice cubes in tray -->
+      <rect x="13" y="43" width="8" height="6" rx="1.5" fill="#B3E5FC"/>
+      <rect x="23" y="43" width="8" height="6" rx="1.5" fill="#B3E5FC"/>
+      <rect x="33" y="43" width="8" height="6" rx="1.5" fill="#B3E5FC"/>
+      <!-- power button -->
+      <circle cx="42" cy="34" r="4" fill="#4CAF50"/>
+      <text x="42" y="37" font-size="4.5" text-anchor="middle" fill="#FFF" font-weight="bold">ON</text>
+    </svg>`,
+
+    soundsystem: `<svg viewBox="0 0 56 56" width="52" height="52" xmlns="http://www.w3.org/2000/svg">
+      <!-- left cabinet -->
+      <rect x="2" y="14" width="19" height="38" rx="4" fill="#212121"/>
+      <rect x="3" y="15" width="17" height="36" rx="3" fill="#1A1A2E"/>
+      <!-- left woofer ring + cone -->
+      <circle cx="11.5" cy="26" r="7" fill="#333"/>
+      <circle cx="11.5" cy="26" r="5.5" fill="#424242"/>
+      <circle cx="11.5" cy="26" r="3.5" fill="#FF8C00" opacity="0.85"/>
+      <circle cx="11.5" cy="26" r="1.5" fill="#FFD740"/>
+      <!-- left tweeter -->
+      <circle cx="11.5" cy="38" r="4" fill="#333"/>
+      <circle cx="11.5" cy="38" r="2.5" fill="#546E7A"/>
+      <circle cx="11.5" cy="38" r="1"   fill="#78909C"/>
+      <!-- right cabinet -->
+      <rect x="35" y="14" width="19" height="38" rx="4" fill="#212121"/>
+      <rect x="36" y="15" width="17" height="36" rx="3" fill="#1A1A2E"/>
+      <!-- right woofer -->
+      <circle cx="44.5" cy="26" r="7" fill="#333"/>
+      <circle cx="44.5" cy="26" r="5.5" fill="#424242"/>
+      <circle cx="44.5" cy="26" r="3.5" fill="#FF8C00" opacity="0.85"/>
+      <circle cx="44.5" cy="26" r="1.5" fill="#FFD740"/>
+      <!-- right tweeter -->
+      <circle cx="44.5" cy="38" r="4" fill="#333"/>
+      <circle cx="44.5" cy="38" r="2.5" fill="#546E7A"/>
+      <circle cx="44.5" cy="38" r="1"   fill="#78909C"/>
+      <!-- central mixer/amp unit -->
+      <rect x="20" y="24" width="16" height="20" rx="3" fill="#1A1A2E"/>
+      <rect x="21" y="26" width="14" height="8" rx="2" fill="#263238"/>
+      <!-- knobs on amp -->
+      <circle cx="25" cy="30" r="3" fill="#FF8C00"/>
+      <circle cx="31" cy="30" r="3" fill="#FFD740"/>
+      <line  x1="25" y1="27" x2="25" y2="30" stroke="#1A1A2E" stroke-width="1.2"/>
+      <line  x1="31" y1="27" x2="32" y2="30" stroke="#1A1A2E" stroke-width="1.2"/>
+      <!-- music notes floating -->
+      <text x="22" y="14" font-size="10" fill="#FFD740">♪</text>
+      <text x="30" y="10" font-size="12" fill="#FF8C00">♫</text>
+    </svg>`,
+
+    neon: `<svg viewBox="0 0 56 56" width="52" height="52" xmlns="http://www.w3.org/2000/svg">
+      <!-- hanging wires -->
+      <line x1="16" y1="2"  x2="14" y2="10" stroke="#90A4AE" stroke-width="1.5"/>
+      <line x1="40" y1="2"  x2="42" y2="10" stroke="#90A4AE" stroke-width="1.5"/>
+      <circle cx="16" cy="2"  r="2" fill="#90A4AE"/>
+      <circle cx="40" cy="2"  r="2" fill="#90A4AE"/>
+      <!-- sign board -->
+      <rect x="4" y="10" width="48" height="38" rx="6" fill="#0D0D1A"/>
+      <!-- outer glow ring (simulate neon glow) -->
+      <rect x="4" y="10" width="48" height="38" rx="6" fill="none" stroke="#FFD740" stroke-width="2" opacity="0.4"/>
+      <!-- inner border tube -->
+      <rect x="7" y="13" width="42" height="32" rx="4" fill="none" stroke="#FF8C00" stroke-width="1.5" stroke-dasharray="4,2" opacity="0.6"/>
+      <!-- LEMON big neon text with glow -->
+      <text x="28" y="31" font-size="12" font-weight="bold" text-anchor="middle"
+        fill="#FFD740" stroke="#FF8C00" stroke-width="0.4">LEMON</text>
+      <!-- glow halo under text -->
+      <ellipse cx="28" cy="31" rx="18" ry="5" fill="#FFD740" opacity="0.08"/>
+      <!-- decorative lemon shape bottom -->
+      <ellipse cx="28" cy="38" rx="9" ry="5" fill="none" stroke="#FFD740" stroke-width="1.5" opacity="0.6"/>
+      <line x1="28" y1="33" x2="28" y2="36" stroke="#FFD740" stroke-width="1.5" opacity="0.6"/>
+      <!-- corner sparkle stars -->
+      <text x="6"  y="17" font-size="6" fill="#FFD740" opacity="0.9">✦</text>
+      <text x="44" y="17" font-size="6" fill="#FFD740" opacity="0.9">✦</text>
+      <text x="6"  y="46" font-size="6" fill="#FFD740" opacity="0.9">✦</text>
+      <text x="44" y="46" font-size="6" fill="#FFD740" opacity="0.9">✦</text>
+    </svg>`,
+
+    dispenser: `<svg viewBox="0 0 56 56" width="52" height="52" xmlns="http://www.w3.org/2000/svg">
+      <!-- machine cylinder body -->
+      <rect x="13" y="4" width="30" height="40" rx="8" fill="#455A64"/>
+      <!-- tank window (clear) -->
+      <rect x="17" y="8"  width="22" height="24" rx="5" fill="#B3E5FC" stroke="#42A5F5" stroke-width="1"/>
+      <!-- lemonade fill level -->
+      <rect x="17" y="18" width="22" height="14" rx="4" fill="#FFD740" opacity="0.85"/>
+      <!-- bubbles in drink -->
+      <circle cx="22" cy="22" r="2"   fill="#FFF" opacity="0.55"/>
+      <circle cx="30" cy="20" r="1.5" fill="#FFF" opacity="0.55"/>
+      <circle cx="34" cy="24" r="1"   fill="#FFF" opacity="0.55"/>
+      <!-- control row -->
+      <rect x="15" y="34" width="26" height="8" rx="3" fill="#37474F"/>
+      <circle cx="22" cy="38" r="3.5" fill="#EF5350"/>
+      <circle cx="34" cy="38" r="3.5" fill="#66BB6A"/>
+      <!-- lemon slice badge on tank -->
+      <circle cx="38" cy="13" r="5" fill="#FFD740" stroke="#FF8C00" stroke-width="1"/>
+      <line x1="38" y1="8"  x2="38" y2="18" stroke="#FF8C00" stroke-width="0.8"/>
+      <line x1="33" y1="13" x2="43" y2="13" stroke="#FF8C00" stroke-width="0.8"/>
+      <!-- spout nozzle -->
+      <rect x="22" y="42" width="12" height="5" rx="2.5" fill="#546E7A"/>
+      <rect x="26" y="47" width="4"  height="5" rx="1.5" fill="#37474F"/>
+      <!-- liquid drop -->
+      <ellipse cx="28" cy="53" rx="2" ry="3" fill="#FFD740" opacity="0.8"/>
+      <!-- capacity badge -->
+      <rect x="2" y="6" width="14" height="10" rx="3" fill="#1A1A2E"/>
+      <text x="9" y="14" font-size="6.5" text-anchor="middle" fill="#FFD740" font-weight="bold">+5✦</text>
+    </svg>`,
+
+    icemaker: `<svg viewBox="0 0 56 56" width="52" height="52" xmlns="http://www.w3.org/2000/svg">
+      <!-- main industrial cabinet -->
+      <rect x="5" y="4" width="46" height="44" rx="7" fill="#37474F"/>
+      <!-- recessed front panel -->
+      <rect x="9" y="8" width="38" height="24" rx="5" fill="#455A64"/>
+      <!-- digital display -->
+      <rect x="11" y="10" width="26" height="10" rx="2" fill="#1A237E"/>
+      <text x="24" y="17.5" font-size="6" text-anchor="middle" fill="#82B1FF" font-weight="bold">50🧊/day</text>
+      <!-- snowflake panel -->
+      <rect x="39" y="10" width="6" height="10" rx="2" fill="#0D47A1"/>
+      <text x="42" y="18" font-size="9" text-anchor="middle">❄️</text>
+      <!-- three round gauges -->
+      <circle cx="17" cy="36" r="6" fill="#263238" stroke="#546E7A" stroke-width="1"/>
+      <circle cx="17" cy="36" r="4" fill="#0288D1" opacity="0.85"/>
+      <line   x1="17" y1="32" x2="17" y2="36" stroke="#FFF" stroke-width="1.5" stroke-linecap="round"/>
+      <circle cx="28" cy="36" r="6" fill="#263238" stroke="#546E7A" stroke-width="1"/>
+      <circle cx="28" cy="36" r="4" fill="#388E3C" opacity="0.85"/>
+      <line   x1="28" y1="32" x2="29" y2="36" stroke="#FFF" stroke-width="1.5" stroke-linecap="round"/>
+      <circle cx="39" cy="36" r="6" fill="#263238" stroke="#546E7A" stroke-width="1"/>
+      <circle cx="39" cy="36" r="4" fill="#D32F2F" opacity="0.85"/>
+      <line   x1="39" y1="32" x2="41" y2="36" stroke="#FFF" stroke-width="1.5" stroke-linecap="round"/>
+      <!-- side pipes -->
+      <rect x="0"  y="16" width="7" height="5" rx="2" fill="#546E7A"/>
+      <rect x="49" y="16" width="7" height="5" rx="2" fill="#546E7A"/>
+      <!-- output tray -->
+      <rect x="9"  y="46" width="38" height="8" rx="4" fill="#263238"/>
+      <!-- three ice blocks in tray -->
+      <rect x="11" y="47" width="10" height="6" rx="2" fill="#B3E5FC"/>
+      <rect x="23" y="47" width="10" height="6" rx="2" fill="#B3E5FC"/>
+      <rect x="35" y="47" width="10" height="6" rx="2" fill="#B3E5FC"/>
+    </svg>`,
+  };
+
+  const u = UPGRADES.find(x => x.id === id);
+  return svgs[id]
+    || `<svg viewBox="0 0 52 52" width="48" height="48"><text x="26" y="36" font-size="30" text-anchor="middle">${u ? u.emoji : '🔧'}</text></svg>`;
+}
+
+// ── AD PURCHASE EFFECTS ───────────────────────────────────────────────────────
+// Each effect runs once on purchase, then cleans itself up automatically.
+
+function _ensureAdStyles() {
+  if (document.getElementById('_adFxCss')) return;
+  const s = document.createElement('style');
+  s.id = '_adFxCss';
+  s.textContent = `
+    .adfx-layer{position:fixed;inset:0;pointer-events:none;z-index:9000;overflow:hidden;}
+
+    /* Flyer: paper sheets drift down */
+    .adfx-flyer{position:absolute;font-size:1.8rem;top:-60px;
+      animation:adfxFall linear forwards;}
+    @keyframes adfxFall{
+      0%  {opacity:1;transform:rotate(0deg) translateY(0);}
+      100%{opacity:0;transform:rotate(540deg) translateY(105vh);}
+    }
+
+    /* Radio: icon + expanding rings */
+    .adfx-radio-icon{position:absolute;font-size:3.2rem;
+      left:50%;top:38%;transform:translate(-50%,-50%);
+      animation:adfxPop 2s ease forwards;}
+    @keyframes adfxPop{
+      0%  {transform:translate(-50%,-50%) scale(0);opacity:0;}
+      18% {transform:translate(-50%,-50%) scale(1.3);opacity:1;}
+      30% {transform:translate(-50%,-50%) scale(1);opacity:1;}
+      82% {transform:translate(-50%,-50%) scale(1);opacity:1;}
+      100%{transform:translate(-50%,-50%) scale(0);opacity:0;}
+    }
+    .adfx-ring{position:absolute;border-radius:50%;
+      border:3px solid rgba(255,200,50,0.7);
+      left:50%;top:38%;width:70px;height:70px;
+      margin-left:-35px;margin-top:-35px;
+      animation:adfxRing 1.4s ease-out forwards;}
+    @keyframes adfxRing{
+      0%  {transform:scale(0);opacity:0.9;}
+      100%{transform:scale(5);opacity:0;}
+    }
+
+    /* Newspaper: flies in from right, pauses, exits left */
+    .adfx-news{position:absolute;top:22%;left:50%;
+      transform:translateX(120vw) rotate(12deg);
+      font-size:4rem;text-align:center;
+      animation:adfxNews 2.4s cubic-bezier(.22,1,.36,1) forwards;}
+    @keyframes adfxNews{
+      0%  {transform:translateX(120vw) rotate(12deg);opacity:0;}
+      22% {transform:translateX(-50%)  rotate(-3deg);opacity:1;}
+      68% {transform:translateX(-50%)  rotate(-3deg);opacity:1;}
+      100%{transform:translateX(-160vw) rotate(-15deg);opacity:0;}
+    }
+    .adfx-news-label{display:block;font-size:0.72rem;font-weight:700;
+      background:#fff;color:#222;border-radius:4px;
+      padding:2px 8px;margin-top:-6px;white-space:nowrap;}
+
+    /* TV: drops from top, flashes, bounces back up */
+    .adfx-tv{position:absolute;top:26%;left:50%;
+      transform:translate(-50%,-200%) scale(0.4);font-size:4.5rem;
+      text-align:center;
+      animation:adfxTV 2.4s cubic-bezier(.34,1.56,.64,1) forwards;}
+    @keyframes adfxTV{
+      0%  {transform:translate(-50%,-200%) scale(0.4);opacity:0;}
+      25% {transform:translate(-50%,0)     scale(1.1);opacity:1;}
+      35% {transform:translate(-50%,0)     scale(1);  opacity:1;}
+      75% {transform:translate(-50%,0)     scale(1);  opacity:1;}
+      100%{transform:translate(-50%,-200%) scale(0.4);opacity:0;}
+    }
+    .adfx-tv-flash{position:absolute;inset:0;
+      animation:adfxFlash 0.35s ease-in-out 4 0.4s;}
+    @keyframes adfxFlash{
+      0%,100%{background:transparent;}
+      50%    {background:rgba(255,255,200,0.22);}
+    }
+    .adfx-tv-label{display:block;font-size:0.72rem;font-weight:700;
+      background:#e53935;color:#fff;border-radius:4px;
+      padding:2px 8px;margin-top:-4px;white-space:nowrap;}
+
+    /* Blimp: floats right-to-left across the top */
+    .adfx-blimp{position:absolute;top:8%;
+      display:flex;align-items:center;gap:6px;
+      animation:adfxBlimp 3.2s linear forwards;}
+    @keyframes adfxBlimp{
+      0%  {left:110%;opacity:0;}
+      8%  {opacity:1;}
+      92% {opacity:1;}
+      100%{left:-320px;opacity:0;}
+    }
+    .adfx-blimp-icon{font-size:3.2rem;line-height:1;}
+    .adfx-blimp-banner{font-size:0.72rem;font-weight:700;
+      background:#FFD700;color:#1A1A2E;border-radius:4px;
+      padding:3px 10px;white-space:nowrap;
+      box-shadow:0 2px 6px rgba(0,0,0,0.2);}
+  `;
+  document.head.appendChild(s);
+}
+
+function _playAdEffect(adId) {
+  _ensureAdStyles();
+  const layer = document.createElement('div');
+  layer.className = 'adfx-layer';
+  document.body.appendChild(layer);
+
+  let lifetime = 2800;
+
+  if (adId === 'ad_flyer') {
+    lifetime = 3400;
+    for (let i = 0; i < 12; i++) {
+      const f = document.createElement('div');
+      f.className = 'adfx-flyer';
+      f.textContent = '📄';
+      f.style.left  = (3 + Math.random() * 94) + 'vw';
+      f.style.animationDelay    = (Math.random() * 0.9) + 's';
+      f.style.animationDuration = (1.6 + Math.random() * 0.8) + 's';
+      layer.appendChild(f);
+    }
+
+  } else if (adId === 'ad_radio') {
+    lifetime = 2600;
+    const icon = document.createElement('div');
+    icon.className = 'adfx-radio-icon';
+    icon.textContent = '📻';
+    layer.appendChild(icon);
+    for (let i = 0; i < 4; i++) {
+      const r = document.createElement('div');
+      r.className = 'adfx-ring';
+      r.style.animationDelay = (i * 0.28) + 's';
+      layer.appendChild(r);
+    }
+
+  } else if (adId === 'ad_newspaper') {
+    lifetime = 2600;
+    const el = document.createElement('div');
+    el.className = 'adfx-news';
+    el.innerHTML = '📰<span class="adfx-news-label">LEMON EMPIRE — TODAY\'S SPECIAL!</span>';
+    layer.appendChild(el);
+
+  } else if (adId === 'ad_tv') {
+    lifetime = 2800;
+    const el = document.createElement('div');
+    el.className = 'adfx-tv';
+    el.innerHTML = '📺<span class="adfx-tv-label">NOW ON AIR!</span>';
+    layer.appendChild(el);
+    const flash = document.createElement('div');
+    flash.className = 'adfx-tv-flash';
+    layer.appendChild(flash);
+
+  } else if (adId === 'ad_blimp') {
+    lifetime = 3600;
+    const el = document.createElement('div');
+    el.className = 'adfx-blimp';
+    el.innerHTML = '<span class="adfx-blimp-icon">🎈</span><span class="adfx-blimp-banner">🍋 LEMON EMPIRE LEMONADE!</span>';
+    layer.appendChild(el);
+  }
+
+  setTimeout(() => layer.remove(), lifetime);
 }
 
 // â”€â”€ STATS SCREEN â”€â”€

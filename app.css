@@ -1118,10 +1118,10 @@ input[type="range"]::-moz-range-thumb {
   background: var(--white);
   border-radius: var(--radius);
   box-shadow: var(--shadow);
-  padding: 14px;
+  padding: 12px;
   margin-bottom: 10px;
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   gap: 12px;
   border: 2px solid transparent;
   transition: all 0.2s;
@@ -1131,7 +1131,26 @@ input[type="range"]::-moz-range-thumb {
   background: #f1f8e9;
 }
 .upgrade-card.locked { opacity: 0.45; }
-.ug-emoji { font-size: 2rem; flex-shrink: 0; }
+
+/* SVG tool icon box */
+.ug-icon {
+  flex-shrink: 0;
+  width: 64px;
+  height: 64px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  background: linear-gradient(145deg, #f5f5f5, #e8e8e8);
+  box-shadow: inset 0 1px 3px rgba(0,0,0,0.12), 0 2px 4px rgba(0,0,0,0.08);
+}
+.upgrade-card.owned .ug-icon {
+  background: linear-gradient(145deg, #e8f5e9, #dcedc8);
+  box-shadow: inset 0 1px 3px rgba(76,175,80,0.15), 0 2px 4px rgba(0,0,0,0.08);
+}
+.ug-icon svg { display: block; }
+
 .ug-info { flex: 1; min-width: 0; }
 .ug-name { font-family: var(--font); font-size: 0.95rem; }
 .ug-desc { font-size: 0.78rem; color: var(--gray); line-height: 1.4; margin-top: 2px; }
@@ -1749,20 +1768,25 @@ input[type="range"]::-moz-range-thumb {
   position: absolute;
   right: 6px; bottom: 40px;
   z-index: 10;
+  /* needs relative so day-ptag inside it can be positioned correctly */
 }
 #day-ptag {
   position: absolute;
-  bottom: 116px; right: 10px;
+  /* sits at bottom-center of the stand counter area */
+  bottom: 4px;
+  left: 50%;
+  transform: translateX(-50%);
   background: var(--yellow);
   border: 2px solid var(--orange);
   border-radius: 8px;
-  padding: 2px 8px;
+  padding: 3px 10px;
   font-family: var(--font);
-  font-size: 0.8rem;
+  font-size: 0.85rem;
   color: var(--navy);
   z-index: 15;
-  box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+  box-shadow: 0 2px 5px rgba(0,0,0,0.25);
   pointer-events: none;
+  white-space: nowrap;
 }
 
 /* Compact HUD below day scene */

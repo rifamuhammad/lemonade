@@ -42,195 +42,549 @@ const CUSTOMER_PALETTES = [
   { skin:'#FFCD94', hair:'#D32F2F', shirt:'#5C6BC0', pants:'#4A148C', shoes:'#212121' },
 ];
 
-// Visual extras injected into the stand SVG based on owned upgrades
-function buildStandExtras(u) {
+// ── EQUIPMENT SVG SNIPPETS (reusable pieces, positioned by caller) ──────────────
+// Each _eq* function takes (x,y) as the top-left anchor and returns SVG markup.
+
+// Citrus juicer: cone on collection tray + optional power bolt
+function _eqJuicer(x, y, powered) {
+  const rc = powered ? '#E65100' : '#BF360C';
+  const cc = powered ? '#FF8C00' : '#FF5722';
+  return `
+    <rect x="${x}" y="${y+11}" width="18" height="8"  rx="2.5" fill="${rc}"/>
+    <ellipse cx="${x+9}" cy="${y+11}" rx="8" ry="3.5" fill="${cc}"/>
+    <polygon points="${x+9},${y} ${x+1},${y+11} ${x+17},${y+11}" fill="#FFA726"/>
+    <ellipse cx="${x+9}" cy="${y}" rx="5.5" ry="3" fill="#FFF176"/>
+    <rect x="${x+1}" y="${y+16}" width="16" height="4" rx="1.5" fill="#4E342E"/>
+    ${powered ? `<polygon points="${x+14},${y-2} ${x+11},${y+6} ${x+13},${y+6} ${x+10},${y+14} ${x+17},${y+5} ${x+14},${y+5}" fill="#FFD740" opacity="0.9"/>` : ''}`;
+}
+
+// EZserve cash register: body + LCD screen + key row + drawer
+function _eqRegister(x, y) {
+  return `
+    <rect x="${x}" y="${y}" width="22" height="17" rx="2.5" fill="#37474F"/>
+    <rect x="${x+2}" y="${y+1.5}" width="18" height="8" rx="1.5" fill="#00ACC1" opacity="0.85"/>
+    <rect x="${x+4}" y="${y+3.5}" width="14" height="4" rx="1" fill="#E0F7FA" opacity="0.45"/>
+    <rect x="${x+2}" y="${y+11}" width="18" height="3" rx="1" fill="#1C313A"/>
+    <rect x="${x+4}" y="${y+11.5}" width="10" height="2" rx="0.8" fill="#546E7A"/>
+    <rect x="${x}" y="${y+14}" width="22" height="3" rx="1.5" fill="#263238"/>
+    <rect x="${x+5}" y="${y+14.5}" width="10" height="2" rx="0.8" fill="#546E7A"/>`;
+}
+
+// Take2 lemonade dispenser: cylinder body + yellow fill + tap + buttons
+function _eqDispenser(x, y) {
+  return `
+    <rect x="${x}" y="${y}" width="18" height="22" rx="4" fill="#455A64"/>
+    <rect x="${x+2}" y="${y+2}" width="14" height="13" rx="3" fill="#B3E5FC" opacity="0.9"/>
+    <rect x="${x+2}" y="${y+9}" width="14" height="6"  rx="2" fill="#FFD740" opacity="0.8"/>
+    <circle cx="${x+5}" cy="${y+6}" r="1.5" fill="#FFF" opacity="0.5"/>
+    <circle cx="${x+9}" cy="${y+5}" r="1"   fill="#FFF" opacity="0.5"/>
+    <rect x="${x+2}" y="${y+16}" width="14" height="4" rx="2" fill="#37474F"/>
+    <circle cx="${x+6}" cy="${y+18}" r="1.8" fill="#4CAF50"/>
+    <circle cx="${x+12}" cy="${y+18}" r="1.8" fill="#F44336"/>
+    <rect x="${x+5}" y="${y+20}" width="8" height="2.5" rx="1.2" fill="#00BCD4"/>`;
+}
+
+// Mr. Fridge: two-door unit with snowflake top and handle
+function _eqFridge(x, y) {
+  return `
+    <rect x="${x}" y="${y}" width="11" height="32" rx="3" fill="#4DD0E1"/>
+    <rect x="${x+1.5}" y="${y+1.5}" width="8" height="13" rx="2" fill="#E0F7FA"/>
+    <rect x="${x+1.5}" y="${y+16}" width="8" height="13" rx="2" fill="#E0F7FA"/>
+    <line x1="${x+2}" y1="${y+14.5}" x2="${x+9}" y2="${y+14.5}" stroke="#4DD0E1" stroke-width="1.5"/>
+    <rect x="${x+8.5}" y="${y+4}"  width="2" height="6"  rx="1" fill="#80DEEA"/>
+    <rect x="${x+8.5}" y="${y+18}" width="2" height="6"  rx="1" fill="#80DEEA"/>
+    <circle cx="${x+2.5}" cy="${y+28}" r="1.5" fill="#29B6F6" opacity="0.9"/>`;
+}
+
+// Ice-O-Matic: blue machine with ice cube window + output tray
+function _eqIceomatic(x, y) {
+  return `
+    <rect x="${x}" y="${y}" width="15" height="20" rx="3" fill="#0288D1"/>
+    <rect x="${x+2}" y="${y+2}" width="11" height="10" rx="2" fill="#E3F2FD" opacity="0.9"/>
+    <rect x="${x+3}" y="${y+3}" width="4" height="5" rx="1" fill="#B3E5FC" stroke="#64B5F6" stroke-width="0.6"/>
+    <rect x="${x+8}" y="${y+3}" width="4" height="5" rx="1" fill="#B3E5FC" stroke="#64B5F6" stroke-width="0.6"/>
+    <rect x="${x+2}" y="${y+13}" width="11" height="3.5" rx="1.5" fill="#01579B"/>
+    <rect x="${x+3}" y="${y+16}" width="9"  height="3"   rx="1" fill="#B3E5FC" opacity="0.75"/>`;
+}
+
+// High-Output Auto Ice Maker: industrial cabinet + gauges + ice tray
+function _eqIcemaker(x, y) {
+  return `
+    <rect x="${x}" y="${y}" width="16" height="28" rx="3" fill="#01579B"/>
+    <rect x="${x+2}" y="${y+2}" width="12" height="10" rx="2" fill="#0288D1"/>
+    <rect x="${x+3}" y="${y+3}" width="10" height="5"  rx="1.5" fill="#1A237E" opacity="0.8"/>
+    <rect x="${x+4}" y="${y+4}" width="8"  height="3"  rx="1" fill="#82B1FF" opacity="0.55"/>
+    <circle cx="${x+5}"  cy="${y+15}" r="3" fill="#0D47A1" stroke="#42A5F5" stroke-width="1"/>
+    <circle cx="${x+11}" cy="${y+15}" r="3" fill="#0D47A1" stroke="#4CAF50"  stroke-width="1"/>
+    <line x1="${x+5}"  y1="${y+12}" x2="${x+5}"  y2="${y+15}" stroke="#fff" stroke-width="1.2" stroke-linecap="round"/>
+    <line x1="${x+11}" y1="${y+12}" x2="${x+12}" y2="${y+15}" stroke="#fff" stroke-width="1.2" stroke-linecap="round"/>
+    <rect x="${x+2}" y="${y+20}" width="12" height="7" rx="1.5" fill="#B3E5FC" opacity="0.75"/>
+    <rect x="${x+3}" y="${y+21}" width="4"  height="5" rx="1" fill="#E1F5FE"/>
+    <rect x="${x+9}" y="${y+21}" width="4"  height="5" rx="1" fill="#E1F5FE"/>`;
+}
+
+// Speaker cabinet: box + woofer ring + tweeter
+function _eqSpeaker(x, y) {
+  return `
+    <rect x="${x}" y="${y}" width="11" height="22" rx="2.5" fill="#1A1A2E"/>
+    <rect x="${x+1}" y="${y+1}" width="9" height="20" rx="2" fill="#111827"/>
+    <circle cx="${x+5.5}" cy="${y+9}"  r="4.5" fill="#212121"/>
+    <circle cx="${x+5.5}" cy="${y+9}"  r="3"   fill="#2A2A3E"/>
+    <circle cx="${x+5.5}" cy="${y+9}"  r="1.8" fill="#FF8C00" opacity="0.9"/>
+    <circle cx="${x+5.5}" cy="${y+9}"  r="0.8" fill="#FFD740"/>
+    <circle cx="${x+5.5}" cy="${y+17}" r="2.5" fill="#212121"/>
+    <circle cx="${x+5.5}" cy="${y+17}" r="1.5" fill="#37474F"/>`;
+}
+
+// Neon strip pair (top + bottom) — takes full-width x1→x2 and two y positions
+function _eqNeon(x1, x2, yTop, yBot) {
+  const w = x2 - x1;
+  return `
+    <rect x="${x1}" y="${yTop}" width="${w}" height="3"   rx="1.5" fill="#FFD700" opacity="0.92"/>
+    <rect x="${x1}" y="${yTop}" width="${w}" height="1.2" rx="0.6" fill="#FFF9C4" opacity="0.6"/>
+    <rect x="${x1}" y="${yBot}" width="${w}" height="3"   rx="1.5" fill="#FF4081" opacity="0.88"/>
+    <rect x="${x1}" y="${yBot}" width="${w}" height="1.2" rx="0.6" fill="#FCE4EC" opacity="0.5"/>`;
+}
+
+// Canopy shade panel — orange/white striped to match the awning
+function _eqCanopyPanel(x, y, w) {
+  const sw = Math.max(4, Math.round(w / 4));
+  return `
+    <rect x="${x}" y="${y}" width="${w}" height="11" rx="4" fill="#FF8C00" opacity="0.92"/>
+    <rect x="${x+sw}"   y="${y}" width="${sw}" height="11" rx="0" fill="#FFF8E1" opacity="0.75"/>
+    <rect x="${x+sw*3}" y="${y}" width="${sw}" height="11" rx="0" fill="#FFF8E1" opacity="0.75"/>
+    <rect x="${x}" y="${y+8}" width="${w}" height="3" rx="1.5" fill="#E65100" opacity="0.5"/>
+    <rect x="${x}" y="${y}" width="${w}" height="11" rx="4" fill="none" stroke="#E65100" stroke-width="0.8" opacity="0.55"/>`;
+}
+
+// ── Per-tier extras (correct coordinate space for each stand SVG) ─────────────
+
+function _extrasDefault(u) {
+  // Coordinate space: viewBox="0 0 138 158"
+  // Counter area: y=104–158; sign: y=84–104; awning arc bottom: y=38
   const parts = [];
 
-  // Juicer / Power Juicer — orange juicer machine on left counter
-  if (u.juicer || u.powerjuicer) {
-    const c = u.powerjuicer ? '#FFA000' : '#FF8C00';
-    parts.push(`
-      <rect x="7" y="85" width="13" height="19" fill="${c}" rx="3"/>
-      <circle cx="13" cy="91" r="5" fill="#FFF176" stroke="${c}" stroke-width="1.5"/>
-      <rect x="10" y="97" width="7" height="7" fill="#795548" rx="1.5"/>
-      ${u.powerjuicer ? '<text x="13" y="110" text-anchor="middle" font-size="6" fill="#FFA000">⚡</text>' : '<text x="13" y="110" text-anchor="middle" font-size="6" fill="#FF8C00">🍊</text>'}
-    `);
-  }
-
-  // EZserve Cash Register — grey register on right counter
-  if (u.register) {
-    parts.push(`
-      <rect x="111" y="85" width="21" height="19" fill="#37474F" rx="3"/>
-      <rect x="113" y="87" width="17" height="9" fill="#4FC3F7" rx="2" opacity="0.85"/>
-      <rect x="115" y="90" width="13" height="4" fill="white" rx="1" opacity="0.5"/>
-      <rect x="113" y="98" width="17" height="4" fill="#263238" rx="1"/>
-      <text x="121" y="109" text-anchor="middle" font-size="6" fill="#4FC3F7">💳</text>
-    `);
-  }
-
-  // Take2 Dispenser — robot machine center counter
-  if (u.dispenser) {
-    parts.push(`
-      <rect x="60" y="84" width="18" height="20" fill="#607D8B" rx="3"/>
-      <rect x="62" y="86" width="14" height="10" fill="#455A64" rx="2"/>
-      <circle cx="66" cy="90" r="2" fill="#4FC3F7"/>
-      <circle cx="72" cy="90" r="2" fill="#4FC3F7"/>
-      <rect x="63" y="98" width="12" height="3" fill="#00BCD4" rx="1.5"/>
-      <text x="69" y="111" text-anchor="middle" font-size="6" fill="#607D8B">🤖</text>
-    `);
-  }
-
-  // Sound System — speakers on both sides
-  if (u.soundsystem) {
-    parts.push(`
-      <rect x="0" y="48" width="11" height="20" fill="#212121" rx="2"/>
-      <circle cx="5" cy="56" r="4" fill="#333"/>
-      <circle cx="5" cy="56" r="2" fill="#616161"/>
-      <rect x="1" y="65" width="9" height="3" fill="#333" rx="1"/>
-      <rect x="127" y="48" width="11" height="20" fill="#212121" rx="2"/>
-      <circle cx="133" cy="56" r="4" fill="#333"/>
-      <circle cx="133" cy="56" r="2" fill="#616161"/>
-      <rect x="128" y="65" width="9" height="3" fill="#333" rx="1"/>
-      <text x="5" y="44" text-anchor="middle" font-size="7">🎵</text>
-    `);
-  }
-
-  // Neon System — glowing coloured strips
-  if (u.neon) {
-    parts.push(`
-      <rect x="3" y="79" width="132" height="3" fill="#FF1493" rx="1.5" opacity="0.9"/>
-      <rect x="3" y="101" width="132" height="3" fill="#00E5FF" rx="1.5" opacity="0.9"/>
-      <rect x="3" y="83" width="132" height="1" fill="#FF69B4" rx="0.5" opacity="0.5"/>
-    `);
-  }
-
-  // Mr. Fridge — blue fridge left of stand
-  if (u.fridge) {
-    parts.push(`
-      <rect x="0" y="97" width="11" height="27" fill="#4DD0E1" rx="3"/>
-      <rect x="2" y="99" width="7" height="11" fill="#E0F7FA" rx="1.5"/>
-      <rect x="2" y="112" width="7" height="10" fill="#E0F7FA" rx="1.5"/>
-      <circle cx="8" cy="118" r="1" fill="#4DD0E1"/>
-      <text x="5" y="131" text-anchor="middle" font-size="6" fill="#00838F">❄️</text>
-    `);
-  }
-
-  // Ice-O-Matic Dispenser — compact ice machine
-  if (u.iceomatic && !u.icemaker) {
-    parts.push(`
-      <rect x="122" y="90" width="16" height="22" fill="#26C6DA" rx="3"/>
-      <rect x="124" y="92" width="12" height="12" fill="#00BCD4" rx="2"/>
-      <text x="130" y="101" text-anchor="middle" font-size="5.5" fill="white" font-weight="bold">ICE</text>
-      <rect x="125" y="106" width="10" height="3" fill="#00838F" rx="1"/>
-    `);
-  }
-
-  // High Output Auto Ice Maker — big ice factory
-  if (u.icemaker) {
-    parts.push(`
-      <rect x="121" y="84" width="17" height="30" fill="#0277BD" rx="3"/>
-      <rect x="123" y="86" width="13" height="16" fill="#0288D1" rx="2"/>
-      <text x="129" y="96" text-anchor="middle" font-size="5" fill="white" font-weight="bold">AUTO</text>
-      <text x="129" y="103" text-anchor="middle" font-size="5" fill="white" font-weight="bold">ICE</text>
-      <rect x="124" y="105" width="10" height="5" fill="#01579B" rx="1.5"/>
-      <text x="129" y="120" text-anchor="middle" font-size="6" fill="#0288D1">🏭</text>
-    `);
-  }
-
-  // ShadeMaker Canopy — green shade extensions above awning
   if (u.canopy) {
+    // LEFT-SIDE shade for customer queue:
+    // Horizontal arm from the main pole (x=68) extends to the left edge,
+    // then fabric hangs down creating a side shelter.
     parts.push(`
-      <ellipse cx="69" cy="14" rx="76" ry="8" fill="#43A047" opacity="0.45"/>
-      <ellipse cx="69" cy="10" rx="70" ry="6" fill="#66BB6A" opacity="0.35"/>
-      <text x="10" y="18" font-size="10">⛱️</text>
+      <rect x="4" y="35" width="64" height="4" rx="2" fill="#6D4C41"/>
+      <rect x="4" y="37" width="28" height="52" rx="3" fill="#FF8C00" opacity="0.88"/>
+      <rect x="4" y="37" width="7"  height="52" rx="0" fill="#FFF8E1" opacity="0.72"/>
+      <rect x="25" y="37" width="7" height="52" rx="0" fill="#FFF8E1" opacity="0.72"/>
+      <rect x="4" y="37" width="3"  height="52" rx="1.5" fill="#6D4C41"/>
+      <rect x="4" y="87" width="28" height="3" rx="1.5" fill="#E65100" opacity="0.55"/>
     `);
   }
-
+  if (u.neon) {
+    // Neon glow along the TOP of the awning arc (clearly visible above everything)
+    parts.push(`
+      <path d="M4,38 Q70,2 134,38" fill="none" stroke="#FFD700" stroke-width="4" opacity="0.95" stroke-linecap="round"/>
+      <path d="M4,38 Q70,2 134,38" fill="none" stroke="#FF4081" stroke-width="2" opacity="0.75" stroke-linecap="round" stroke-dasharray="7,5"/>
+      <circle cx="4"   cy="38" r="3.5" fill="#FFD700" opacity="0.9"/>
+      <circle cx="70"  cy="2"  r="3.5" fill="#FF4081" opacity="0.9"/>
+      <circle cx="134" cy="38" r="3.5" fill="#FFD700" opacity="0.9"/>
+    `);
+  }
+  if (u.soundsystem) {
+    parts.push(_eqSpeaker(0, 47));
+    parts.push(_eqSpeaker(127, 47));
+  }
+  if (u.fridge) {
+    parts.push(_eqFridge(0, 95));
+  }
+  if (u.juicer || u.powerjuicer) {
+    // Left counter zone (x=8–26, y=110–132)
+    parts.push(_eqJuicer(8, 108, !!u.powerjuicer));
+  }
+  if (u.register) {
+    // Right counter zone (x=108–130, y=110–128)
+    parts.push(_eqRegister(108, 110));
+  }
+  if (u.dispenser) {
+    // Center counter (x=57–75, y=108–130)
+    parts.push(_eqDispenser(57, 108));
+  }
+  if (u.icemaker) {
+    parts.push(_eqIcemaker(118, 100));
+  } else if (u.iceomatic) {
+    parts.push(_eqIceomatic(120, 104));
+  }
   return parts.join('');
+}
+
+function _extrasClassic(u) {
+  // Coordinate space: viewBox="0 0 160 168"
+  // Counter top: y=113; cups x=12–46; pitcher x=66–106; ice bucket x=116–150
+  const parts = [];
+  if (u.canopy) {
+    // Shade skirts hang from gutter/fascia line (y=64) across the full stand width
+    parts.push(_eqCanopyPanel(0,   64, 40));
+    parts.push(_eqCanopyPanel(42,  64, 38));
+    parts.push(_eqCanopyPanel(82,  64, 38));
+    parts.push(_eqCanopyPanel(122, 64, 38));
+  }
+  if (u.soundsystem) {
+    parts.push(_eqSpeaker(0, 62));
+    parts.push(_eqSpeaker(149, 62));
+  }
+  if (u.neon) {
+    // Top strip below gutter (y≈69), bottom strip above counter (y=109)
+    parts.push(_eqNeon(3, 157, 68, 109));
+  }
+  if (u.fridge) {
+    parts.push(_eqFridge(0, 100));
+  }
+  if (u.juicer || u.powerjuicer) {
+    // Between cups (x=46) and pitcher (x=66): gap x=47–65, y=97–113
+    parts.push(_eqJuicer(47, 94, !!u.powerjuicer));
+  }
+  if (u.register) {
+    // Right of pitcher handle (x≈106) and left of ice bucket (x=116): x=94–116
+    parts.push(_eqRegister(94, 95));
+  }
+  if (u.dispenser) {
+    // Overlaps pitcher station center, y=95–117
+    parts.push(_eqDispenser(62, 92));
+  }
+  if (u.icemaker) {
+    parts.push(_eqIcemaker(148, 90));
+  } else if (u.iceomatic) {
+    parts.push(_eqIceomatic(149, 94));
+  }
+  return parts.join('');
+}
+
+function _extrasLemon(u) {
+  // Coordinate space: viewBox="0 0 148 168"
+  // Counter base: y=132; cups x=16–42; pitcher x=56–90; ice bucket x=98–124
+  const parts = [];
+  if (u.canopy) {
+    // Shade skirts hang from the bottom of the lemon ellipse arc (bottom ≈ y=138),
+    // giving side coverage left and right of the counter zone
+    parts.push(_eqCanopyPanel(6,   128, 30));
+    parts.push(_eqCanopyPanel(38,  128, 30));
+    parts.push(_eqCanopyPanel(74,  128, 30));
+    parts.push(_eqCanopyPanel(108, 128, 30));
+  }
+  if (u.soundsystem) {
+    // On the lemon sides (outer edge of ellipse body)
+    parts.push(_eqSpeaker(0, 68));
+    parts.push(_eqSpeaker(137, 68));
+  }
+  if (u.neon) {
+    // Strips along counter top and just above counter
+    parts.push(_eqNeon(6, 142, 109, 128));
+  }
+  if (u.fridge) {
+    parts.push(_eqFridge(0, 124));
+  }
+  if (u.juicer || u.powerjuicer) {
+    // Between cups (x=42) and pitcher (x=56): gap is x=43–56, about 13px
+    parts.push(_eqJuicer(43, 116, !!u.powerjuicer));
+  }
+  if (u.register) {
+    // Between pitcher handle (x≈90) and ice bucket (x=98): x=80–98
+    parts.push(_eqRegister(80, 117));
+  }
+  if (u.dispenser) {
+    parts.push(_eqDispenser(55, 113));
+  }
+  if (u.icemaker) {
+    parts.push(_eqIcemaker(130, 116));
+  } else if (u.iceomatic) {
+    parts.push(_eqIceomatic(131, 118));
+  }
+  return parts.join('');
+}
+
+function _extrasCastle(u) {
+  // Coordinate space: viewBox="0 0 168 178"
+  // Counter top: y=158; cups x=38–68; pitcher x=72–103; ice bucket x=106–134
+  // Left tower: x=0–36; Right tower: x=132–168
+  const parts = [];
+  if (u.canopy) {
+    // Shade cloth draped from the top of the keep wall, filling the merlon gaps
+    parts.push(_eqCanopyPanel(36, 60, 24));
+    parts.push(_eqCanopyPanel(62, 60, 24));
+    parts.push(_eqCanopyPanel(88, 60, 24));
+    parts.push(_eqCanopyPanel(114,60, 24));
+  }
+  if (u.soundsystem) {
+    // Inside tower windows (tower window at x=10–26, y=68–90 for left; x=142–158 right)
+    parts.push(_eqSpeaker(9, 108));
+    parts.push(_eqSpeaker(148, 108));
+  }
+  if (u.neon) {
+    // Along the castle wall top (keep crenellations at y=48) + counter strip
+    parts.push(_eqNeon(36, 132, 62, 155));
+  }
+  if (u.fridge) {
+    // Left tower counter area, below the arrow slit (y=114+)
+    parts.push(_eqFridge(3, 128));
+  }
+  if (u.juicer || u.powerjuicer) {
+    // Left tower counter: x=5–23, y=140–158
+    parts.push(_eqJuicer(5, 138, !!u.powerjuicer));
+  }
+  if (u.register) {
+    // Right tower counter: x=136–158, y=140–158
+    parts.push(_eqRegister(136, 140));
+  }
+  if (u.dispenser) {
+    // Castle gate area (above portcullis archway): x=70–88, y=138–160
+    parts.push(_eqDispenser(69, 136));
+  }
+  if (u.icemaker) {
+    // Right tower, tall: x=150–166, y=120–148
+    parts.push(_eqIcemaker(150, 122));
+  } else if (u.iceomatic) {
+    parts.push(_eqIceomatic(151, 128));
+  }
+  return parts.join('');
+}
+
+// Dispatcher: picks the right extras function for the current stand tier
+function buildStandExtras(u, tier) {
+  if (tier === 1) return _extrasClassic(u);
+  if (tier === 2) return _extrasLemon(u);
+  if (tier === 3) return _extrasCastle(u);
+  return _extrasDefault(u);
 }
 
 function buildStandSVG() {
   const tier = Math.min(3, S.standTier || 0);
+  const u    = S.upgrades || {};
+  const ex   = buildStandExtras(u, tier);
+  if (tier === 1) return _standClassic(ex);
+  if (tier === 2) return _standLemon(ex);
+  if (tier === 3) return _standCastle(ex);
+  return _standDefault(ex);
+}
 
-  // Tier-specific colour themes
-  const themes = [
-    { awning1:'#FF8C00', awning2:'#FFD700', fringe:'#F9A825', pole:'#6D4C41', counter:'#8D6E63', body:'#EFCFA0', panel:'#E8BE88', sign:'#FFFDE7', signBorder:'#FF8C00', signText:'🍋 LEMONADE',  extra:'' },
-    { awning1:'#1565C0', awning2:'#FFFFFF', fringe:'#90CAF9', pole:'#5D4037', counter:'#5D4037', body:'#FAFAFA',  panel:'#ECEFF1', sign:'#E3F2FD', signBorder:'#1565C0', signText:'🏪 CLASSIC',    extra:'<rect x="55" y="16" width="28" height="6" fill="#1565C0" rx="2"/><rect x="62" y="10" width="14" height="8" fill="#1565C0" rx="2"/>' },
-    { awning1:'#C62828', awning2:'#FFD700', fringe:'#FF8F00', pole:'#4E342E', counter:'#4E342E', body:'#FFF8E1',  panel:'#FFE082', sign:'#FFECB3', signBorder:'#C62828', signText:'🍋 LEMON PALACE', extra:'<circle cx="69" cy="9" r="7" fill="#FFD700"/><text x="69" y="13" text-anchor="middle" font-size="9" fill="#C62828">â˜…</text>' },
-    { awning1:'#4A148C', awning2:'#FFD700', fringe:'#CE93D8', pole:'#311B92', counter:'#311B92', body:'#F3E5F5',  panel:'#E1BEE7', sign:'#EDE7F6', signBorder:'#4A148C', signText:'👑 LEMON EMPIRE', extra:'<rect x="52" y="0" width="12" height="10" fill="#4A148C"/><rect x="67" y="0" width="12" height="10" fill="#4A148C"/><rect x="82" y="0" width="12" height="10" fill="#4A148C"/><rect x="57" y="6" width="6" height="14" fill="#4A148C"/><rect x="72" y="6" width="6" height="14" fill="#4A148C"/><rect x="87" y="6" width="6" height="14" fill="#4A148C"/>' },
-  ];
-  const t = themes[tier];
-
+// ── Tier 0 — Default starter stand (umbrella awning) ─────────────────────────
+function _standDefault(ex) {
   return `<svg viewBox="0 0 138 158" width="138" height="158" xmlns="http://www.w3.org/2000/svg">
-  ${t.extra}
   <!-- Pole -->
-  <rect x="65" y="22" width="6" height="92" fill="${t.pole}" rx="3"/>
-  <!-- Awning base shape -->
-  <path d="M4,38 Q70,2 134,38 Z" fill="${t.awning1}"/>
-  <!-- Awning alternating panels -->
-  <path d="M4,38 Q25,10 46,7 L70,35 Z"     fill="${t.awning2}"/>
-  <path d="M46,7  Q70,2  70,2  L70,35 Z"   fill="${t.awning1}"/>
-  <path d="M70,2  Q94,2  92,7  L70,35 Z"   fill="${t.awning2}"/>
-  <path d="M92,7  Q112,12 134,38 L70,35 Z" fill="${t.awning1}"/>
-  <!-- Awning scallop border -->
+  <rect x="65" y="22" width="6" height="92" fill="#6D4C41" rx="3"/>
+  <!-- Awning fill (orange/yellow wedges) -->
+  <path d="M4,38 Q70,2 134,38 Z" fill="#FF8C00"/>
+  <path d="M4,38 Q25,10 46,7 L70,35 Z"    fill="#FFD700"/>
+  <path d="M46,7 Q70,2 70,2 L70,35 Z"     fill="#FF8C00"/>
+  <path d="M70,2 Q94,2 92,7 L70,35 Z"     fill="#FFD700"/>
+  <path d="M92,7 Q112,12 134,38 L70,35 Z" fill="#FF8C00"/>
+  <!-- Awning fringe scallops -->
   <path d="M4,38 Q14,51 24,38 Q34,51 44,38 Q54,51 64,38 Q74,51 84,38 Q94,51 104,38 Q114,51 124,38 Q129,44 134,38"
-        fill="none" stroke="${t.fringe}" stroke-width="2.5" stroke-linecap="round"/>
-  <!-- Fringe tassels -->
-  <line x1="9"   y1="40" x2="7"   y2="50" stroke="${t.awning2}" stroke-width="2" stroke-linecap="round"/>
-  <line x1="19"  y1="47" x2="17"  y2="57" stroke="${t.awning1}" stroke-width="2" stroke-linecap="round"/>
-  <line x1="29"  y1="40" x2="27"  y2="50" stroke="${t.awning2}" stroke-width="2" stroke-linecap="round"/>
-  <line x1="39"  y1="46" x2="37"  y2="56" stroke="${t.awning1}" stroke-width="2" stroke-linecap="round"/>
-  <line x1="49"  y1="40" x2="47"  y2="50" stroke="${t.awning2}" stroke-width="2" stroke-linecap="round"/>
-  <line x1="59"  y1="46" x2="57"  y2="56" stroke="${t.awning1}" stroke-width="2" stroke-linecap="round"/>
-  <line x1="69"  y1="40" x2="67"  y2="50" stroke="${t.awning2}" stroke-width="2" stroke-linecap="round"/>
-  <line x1="79"  y1="46" x2="77"  y2="56" stroke="${t.awning1}" stroke-width="2" stroke-linecap="round"/>
-  <line x1="89"  y1="40" x2="87"  y2="50" stroke="${t.awning2}" stroke-width="2" stroke-linecap="round"/>
-  <line x1="99"  y1="46" x2="97"  y2="56" stroke="${t.awning1}" stroke-width="2" stroke-linecap="round"/>
-  <line x1="109" y1="40" x2="107" y2="50" stroke="${t.awning2}" stroke-width="2" stroke-linecap="round"/>
-  <line x1="119" y1="46" x2="117" y2="56" stroke="${t.awning1}" stroke-width="2" stroke-linecap="round"/>
-  <line x1="129" y1="40" x2="127" y2="50" stroke="${t.awning2}" stroke-width="2" stroke-linecap="round"/>
+        fill="none" stroke="#F9A825" stroke-width="2.5" stroke-linecap="round"/>
+  <line x1="9"   y1="40" x2="7"   y2="50" stroke="#FFD700" stroke-width="2" stroke-linecap="round"/>
+  <line x1="24"  y1="48" x2="22"  y2="58" stroke="#FF8C00" stroke-width="2" stroke-linecap="round"/>
+  <line x1="44"  y1="40" x2="42"  y2="50" stroke="#FFD700" stroke-width="2" stroke-linecap="round"/>
+  <line x1="64"  y1="48" x2="62"  y2="58" stroke="#FF8C00" stroke-width="2" stroke-linecap="round"/>
+  <line x1="74"  y1="48" x2="72"  y2="58" stroke="#FFD700" stroke-width="2" stroke-linecap="round"/>
+  <line x1="94"  y1="40" x2="92"  y2="50" stroke="#FF8C00" stroke-width="2" stroke-linecap="round"/>
+  <line x1="114" y1="48" x2="112" y2="58" stroke="#FFD700" stroke-width="2" stroke-linecap="round"/>
+  <line x1="129" y1="40" x2="127" y2="50" stroke="#FF8C00" stroke-width="2" stroke-linecap="round"/>
   <!-- Sign board -->
-  <rect x="12" y="84" width="114" height="20" fill="${t.sign}" rx="5" stroke="${t.signBorder}" stroke-width="1.5"/>
-  <text x="69" y="98" text-anchor="middle" font-size="${tier >= 2 ? 9 : 10}" fill="#1A1A2E"
-        font-family="'Fredoka One',cursive" font-weight="bold">${t.signText}</text>
+  <rect x="12" y="84" width="114" height="20" fill="#FFFDE7" rx="5" stroke="#FF8C00" stroke-width="1.5"/>
+  <text x="69" y="98" text-anchor="middle" font-size="10" fill="#1A1A2E"
+        font-family="'Fredoka One',cursive" font-weight="bold">🍋 LEMONADE</text>
   <!-- Counter top -->
-  <rect x="4"  y="104" width="130" height="9" fill="${t.counter}" rx="4"/>
-  <!-- Counter body -->
-  <rect x="7"  y="113" width="124" height="38" fill="${t.body}" rx="4"/>
-  <!-- Counter panel -->
-  <rect x="11" y="118" width="116" height="28" fill="${t.panel}" rx="3"/>
-  <!-- Dividers -->
-  <line x1="48"  y1="113" x2="48"  y2="151" stroke="${t.counter}" stroke-width="1" opacity="0.4"/>
-  <line x1="90"  y1="113" x2="90"  y2="151" stroke="${t.counter}" stroke-width="1" opacity="0.4"/>
-  <!-- Lemon pitcher -->
-  <rect x="56" y="91" width="22" height="16" fill="#FFD700" rx="7"/>
-  <ellipse cx="67" cy="91" rx="11" ry="4.5" fill="#FFF176"/>
-  <path d="M78,95 Q87,95 87,101 Q87,107 78,107" fill="none" stroke="#F9A825" stroke-width="2.5" stroke-linecap="round"/>
-  <ellipse cx="67" cy="90" rx="6" ry="3" fill="#FFEE58" opacity="0.75"/>
-  <!-- Paper cups left -->
-  <path d="M16,104 L18,89 L28,89 L30,104 Z" fill="white" stroke="#90CAF9" stroke-width="1" opacity="0.95"/>
-  <path d="M32,104 L34,89 L44,89 L46,104 Z" fill="white" stroke="#90CAF9" stroke-width="1" opacity="0.95"/>
-  <line x1="21" y1="89" x2="19" y2="80" stroke="#FF8C00" stroke-width="1.5" stroke-linecap="round"/>
-  <!-- Ice bucket right -->
-  <rect x="94" y="93" width="28" height="15" fill="#B3E5FC" rx="5"/>
-  <ellipse cx="108" cy="93" rx="14" ry="5" fill="#E1F5FE"/>
-  <rect x="97"  y="96" width="7"  height="7" fill="white" rx="1.5" opacity="0.8"/>
-  <rect x="106" y="97" width="7"  height="6" fill="white" rx="1.5" opacity="0.8"/>
-  <rect x="101" y="100" width="6" height="6" fill="white" rx="1.5" opacity="0.8"/>
-  <!-- Lemon deco left side -->
-  <circle cx="24" cy="62" r="9" fill="#FFD700"/>
-  <ellipse cx="24" cy="62" rx="5.5" ry="7" fill="#FFEE58"/>
-  <line x1="24" y1="55" x2="24" y2="69" stroke="#F9A825" stroke-width="0.8"/>
-  <line x1="17" y1="62" x2="31" y2="62" stroke="#F9A825" stroke-width="0.8"/>
-  <!-- Lemon deco right side -->
-  <circle cx="114" cy="62" r="9" fill="#FFD700"/>
-  <ellipse cx="114" cy="62" rx="5.5" ry="7" fill="#FFEE58"/>
-  <line x1="114" y1="55" x2="114" y2="69" stroke="#F9A825" stroke-width="0.8"/>
-  <line x1="107" y1="62" x2="121" y2="62" stroke="#F9A825" stroke-width="0.8"/>
-  <!-- Cashier emoji behind counter -->
-  <text x="68" y="136" text-anchor="middle" font-size="16">😊</text>
-  <!-- Upgrade equipment extras (injected per owned upgrade) -->
-  ${buildStandExtras(S.upgrades)}
+  <rect x="4"  y="104" width="130" height="9" fill="#8D6E63" rx="4"/>
+  <!-- Counter body (clean, no clutter — equipment added via extras) -->
+  <rect x="7"  y="113" width="124" height="45" fill="#EFCFA0" rx="4"/>
+  <rect x="11" y="118" width="116" height="35" fill="#E8BE88" rx="3"/>
+  <!-- Subtle wood grain lines -->
+  <line x1="11" y1="126" x2="127" y2="126" stroke="#C9A876" stroke-width="0.8" opacity="0.5"/>
+  <line x1="11" y1="134" x2="127" y2="134" stroke="#C9A876" stroke-width="0.8" opacity="0.5"/>
+  <line x1="11" y1="142" x2="127" y2="142" stroke="#C9A876" stroke-width="0.8" opacity="0.5"/>
+  <!-- Small lemon decal on counter front (branding) -->
+  <circle cx="69" cy="148" r="6" fill="#FFD740" opacity="0.6"/>
+  <ellipse cx="69" cy="148" rx="6" ry="6" fill="none" stroke="#F9A825" stroke-width="1" opacity="0.5"/>
+  ${ex}
+</svg>`;
+}
+
+// ── Tier 1 — Classic Stand (bigger, solid peaked roof, no umbrella) ───────────
+function _standClassic(ex) {
+  return `<svg viewBox="0 0 160 168" width="160" height="168" xmlns="http://www.w3.org/2000/svg">
+  <!-- Chimney -->
+  <rect x="73" y="0" width="14" height="20" fill="#1A237E" rx="2"/>
+  <rect x="70" y="14" width="20" height="6"  fill="#283593" rx="1"/>
+  <!-- Roof left slope (dark shingles) -->
+  <polygon points="0,62 80,10 80,62" fill="#1565C0"/>
+  <!-- Roof right slope -->
+  <polygon points="160,62 80,10 80,62" fill="#0D47A1"/>
+  <!-- Shingle lines on left -->
+  <line x1="16"  y1="62" x2="80" y2="31" stroke="#0A3473" stroke-width="1.2" opacity="0.6"/>
+  <line x1="32"  y1="62" x2="80" y2="39" stroke="#0A3473" stroke-width="1.2" opacity="0.6"/>
+  <line x1="48"  y1="62" x2="80" y2="47" stroke="#0A3473" stroke-width="1.2" opacity="0.6"/>
+  <line x1="64"  y1="62" x2="80" y2="55" stroke="#0A3473" stroke-width="1.2" opacity="0.6"/>
+  <!-- Shingle lines on right -->
+  <line x1="144" y1="62" x2="80" y2="31" stroke="#0A3473" stroke-width="1.2" opacity="0.6"/>
+  <line x1="128" y1="62" x2="80" y2="39" stroke="#0A3473" stroke-width="1.2" opacity="0.6"/>
+  <line x1="112" y1="62" x2="80" y2="47" stroke="#0A3473" stroke-width="1.2" opacity="0.6"/>
+  <line x1="96"  y1="62" x2="80" y2="55" stroke="#0A3473" stroke-width="1.2" opacity="0.6"/>
+  <!-- Peak star -->
+  <polygon points="80,6 83,14 80,12 77,14" fill="#FFD700"/>
+  <!-- Fascia / gutter -->
+  <rect x="0" y="60" width="160" height="6" fill="#0D47A1"/>
+  <rect x="-2" y="64" width="164" height="5" fill="#4E342E" rx="2"/>
+  <!-- Stand body (full width) -->
+  <rect x="2" y="67" width="156" height="101" fill="#FAFAFA" rx="4"/>
+  <!-- Left window -->
+  <rect x="10" y="76" width="44" height="36" fill="#E3F2FD" rx="5"/>
+  <rect x="10" y="76" width="44" height="36" fill="none" stroke="#1565C0" stroke-width="2" rx="5"/>
+  <line x1="32" y1="76" x2="32" y2="112" stroke="#1565C0" stroke-width="1.5" opacity="0.6"/>
+  <line x1="10" y1="94" x2="54" y2="94" stroke="#1565C0" stroke-width="1.5" opacity="0.6"/>
+  <!-- Right window -->
+  <rect x="106" y="76" width="44" height="36" fill="#E3F2FD" rx="5"/>
+  <rect x="106" y="76" width="44" height="36" fill="none" stroke="#1565C0" stroke-width="2" rx="5"/>
+  <line x1="128" y1="76" x2="128" y2="112" stroke="#1565C0" stroke-width="1.5" opacity="0.6"/>
+  <line x1="106" y1="94" x2="150" y2="94" stroke="#1565C0" stroke-width="1.5" opacity="0.6"/>
+  <!-- Sign board centre (no cashier emoji) -->
+  <rect x="58" y="78" width="44" height="30" fill="#E3F2FD" rx="5" stroke="#1565C0" stroke-width="1.5"/>
+  <text x="80" y="90" text-anchor="middle" font-size="8" fill="#1565C0" font-family="'Fredoka One',cursive" font-weight="bold">🏪 CLASSIC</text>
+  <text x="80" y="102" text-anchor="middle" font-size="7" fill="#1565C0" font-family="'Fredoka One',cursive">STAND</text>
+  <!-- Counter top -->
+  <rect x="0"  y="113" width="160" height="10" fill="#5D4037" rx="4"/>
+  <!-- Counter body (clean) -->
+  <rect x="4"  y="123" width="152" height="45" fill="#ECEFF1" rx="4"/>
+  <rect x="8"  y="128" width="144" height="35" fill="#E8E8E8" rx="3"/>
+  <!-- Wood grain -->
+  <line x1="8"  y1="136" x2="152" y2="136" stroke="#BDBDBD" stroke-width="0.8" opacity="0.6"/>
+  <line x1="8"  y1="144" x2="152" y2="144" stroke="#BDBDBD" stroke-width="0.8" opacity="0.6"/>
+  <!-- Lemon branding on counter front -->
+  <circle cx="80" cy="155" r="7" fill="#FFD740" opacity="0.5"/>
+  <ellipse cx="80" cy="155" rx="7" ry="7" fill="none" stroke="#F9A825" stroke-width="1" opacity="0.5"/>
+  ${ex}
+</svg>`;
+}
+
+// ── Tier 2 — Lemon Stand (entire stand shaped like a giant lemon) ─────────────
+function _standLemon(ex) {
+  return `<svg viewBox="0 0 148 168" width="148" height="168" xmlns="http://www.w3.org/2000/svg">
+  <!-- Lemon body (giant ellipse) -->
+  <ellipse cx="74" cy="76" rx="64" ry="62" fill="#FFD600"/>
+  <!-- Lemon highlight (gloss) -->
+  <ellipse cx="50" cy="44" rx="22" ry="16" fill="#FFF176" opacity="0.55"/>
+  <!-- Lemon texture segments -->
+  <line x1="74" y1="14"  x2="74"  y2="138" stroke="#F9A825" stroke-width="1.2" opacity="0.35"/>
+  <line x1="10" y1="76"  x2="138" y2="76"  stroke="#F9A825" stroke-width="1.2" opacity="0.35"/>
+  <line x1="24" y1="30"  x2="124" y2="122" stroke="#F9A825" stroke-width="1.2" opacity="0.25"/>
+  <line x1="124" y1="30" x2="24"  y2="122" stroke="#F9A825" stroke-width="1.2" opacity="0.25"/>
+  <!-- Lemon border -->
+  <ellipse cx="74" cy="76" rx="64" ry="62" fill="none" stroke="#F9A825" stroke-width="2"/>
+  <!-- Stem -->
+  <rect x="71" y="8" width="6" height="16" fill="#558B2F" rx="3"/>
+  <rect x="69" y="6" width="10" height="5"  fill="#558B2F" rx="2"/>
+  <!-- Leaf left -->
+  <ellipse cx="62" cy="14" rx="13" ry="7" fill="#66BB6A" transform="rotate(-35,62,14)"/>
+  <line x1="62" y1="8" x2="62" y2="20" stroke="#4CAF50" stroke-width="1" transform="rotate(-35,62,14)" opacity="0.5"/>
+  <!-- Leaf right -->
+  <ellipse cx="86" cy="14" rx="13" ry="7" fill="#81C784" transform="rotate(35,86,14)"/>
+  <line x1="86" y1="8" x2="86" y2="20" stroke="#4CAF50" stroke-width="1" transform="rotate(35,86,14)" opacity="0.5"/>
+  <!-- Window (oval cutout in lemon) -->
+  <ellipse cx="74" cy="74" rx="32" ry="28" fill="#FFFDE7"/>
+  <ellipse cx="74" cy="74" rx="32" ry="28" fill="none" stroke="#F9A825" stroke-width="2"/>
+  <!-- Sign text in window -->
+  <text x="74" y="66" text-anchor="middle" font-size="7.5" fill="#E65100" font-family="'Fredoka One',cursive" font-weight="bold">🍋 LEMON</text>
+  <text x="74" y="77" text-anchor="middle" font-size="7.5" fill="#E65100" font-family="'Fredoka One',cursive" font-weight="bold">PALACE</text>
+  <!-- Counter base (clean, no clutter) -->
+  <rect x="8"  y="132" width="132" height="10" fill="#F57F17" rx="4"/>
+  <rect x="12" y="142" width="124" height="26" fill="#FFF8E1" rx="4"/>
+  <!-- Subtle wood grain -->
+  <line x1="12" y1="150" x2="136" y2="150" stroke="#FFD180" stroke-width="0.8" opacity="0.5"/>
+  <line x1="12" y1="158" x2="136" y2="158" stroke="#FFD180" stroke-width="0.8" opacity="0.5"/>
+  ${ex}
+</svg>`;
+}
+
+// ── Tier 3 — Castle Stand (full castle shape with towers and battlements) ──────
+function _standCastle(ex) {
+  return `<svg viewBox="0 0 168 178" width="168" height="178" xmlns="http://www.w3.org/2000/svg">
+  <!-- === LEFT TOWER === -->
+  <rect x="0" y="44" width="36" height="134" fill="#90A4AE" rx="2"/>
+  <!-- Left tower battlements -->
+  <rect x="0"  y="32" width="10" height="14" fill="#90A4AE" rx="1"/>
+  <rect x="13" y="32" width="10" height="14" fill="#90A4AE" rx="1"/>
+  <rect x="26" y="32" width="10" height="14" fill="#90A4AE" rx="1"/>
+  <!-- Left tower window -->
+  <rect x="10" y="68" width="16" height="22" fill="#263238" rx="2"/>
+  <path d="M10,80 Q18,68 26,80" fill="#37474F"/>
+  <!-- Left tower arrow slit -->
+  <rect x="16" y="100" width="4" height="14" fill="#263238" rx="1"/>
+  <rect x="13" y="104" width="10" height="4" fill="#263238" rx="1"/>
+  <!-- Left tower flag -->
+  <rect x="16" y="20" width="3" height="16" fill="#78909C"/>
+  <polygon points="19,20 34,26 19,32" fill="#4A148C"/>
+  <!-- Left stone texture -->
+  <rect x="2"  y="56" width="32" height="5" fill="none" stroke="#78909C" stroke-width="0.8" opacity="0.5" rx="1"/>
+  <rect x="2"  y="70" width="32" height="5" fill="none" stroke="#78909C" stroke-width="0.8" opacity="0.5" rx="1"/>
+  <rect x="2"  y="84" width="32" height="5" fill="none" stroke="#78909C" stroke-width="0.8" opacity="0.5" rx="1"/>
+  <rect x="2"  y="98" width="32" height="5" fill="none" stroke="#78909C" stroke-width="0.8" opacity="0.5" rx="1"/>
+  <rect x="2" y="112" width="32" height="5" fill="none" stroke="#78909C" stroke-width="0.8" opacity="0.5" rx="1"/>
+  <rect x="2" y="126" width="32" height="5" fill="none" stroke="#78909C" stroke-width="0.8" opacity="0.5" rx="1"/>
+
+  <!-- === RIGHT TOWER === -->
+  <rect x="132" y="44" width="36" height="134" fill="#90A4AE" rx="2"/>
+  <!-- Right tower battlements -->
+  <rect x="132" y="32" width="10" height="14" fill="#90A4AE" rx="1"/>
+  <rect x="145" y="32" width="10" height="14" fill="#90A4AE" rx="1"/>
+  <rect x="158" y="32" width="10" height="14" fill="#90A4AE" rx="1"/>
+  <!-- Right tower window -->
+  <rect x="142" y="68" width="16" height="22" fill="#263238" rx="2"/>
+  <path d="M142,80 Q150,68 158,80" fill="#37474F"/>
+  <!-- Right tower arrow slit -->
+  <rect x="148" y="100" width="4" height="14" fill="#263238" rx="1"/>
+  <rect x="145" y="104" width="10" height="4" fill="#263238" rx="1"/>
+  <!-- Right tower flag -->
+  <rect x="149" y="20" width="3" height="16" fill="#78909C"/>
+  <polygon points="152,20 134,26 152,32" fill="#4A148C"/>
+  <!-- Right stone texture -->
+  <rect x="134" y="56"  width="32" height="5" fill="none" stroke="#78909C" stroke-width="0.8" opacity="0.5" rx="1"/>
+  <rect x="134" y="70"  width="32" height="5" fill="none" stroke="#78909C" stroke-width="0.8" opacity="0.5" rx="1"/>
+  <rect x="134" y="84"  width="32" height="5" fill="none" stroke="#78909C" stroke-width="0.8" opacity="0.5" rx="1"/>
+  <rect x="134" y="98"  width="32" height="5" fill="none" stroke="#78909C" stroke-width="0.8" opacity="0.5" rx="1"/>
+  <rect x="134" y="112" width="32" height="5" fill="none" stroke="#78909C" stroke-width="0.8" opacity="0.5" rx="1"/>
+  <rect x="134" y="126" width="32" height="5" fill="none" stroke="#78909C" stroke-width="0.8" opacity="0.5" rx="1"/>
+
+  <!-- === MAIN KEEP (centre wall) === -->
+  <rect x="34" y="60" width="100" height="118" fill="#B0BEC5" rx="2"/>
+  <!-- Keep battlements -->
+  <rect x="36" y="48" width="12" height="14" fill="#B0BEC5" rx="1"/>
+  <rect x="52" y="48" width="12" height="14" fill="#B0BEC5" rx="1"/>
+  <rect x="68" y="48" width="12" height="14" fill="#B0BEC5" rx="1"/>
+  <rect x="84" y="48" width="12" height="14" fill="#B0BEC5" rx="1"/>
+  <rect x="100" y="48" width="12" height="14" fill="#B0BEC5" rx="1"/>
+  <rect x="116" y="48" width="14" height="14" fill="#B0BEC5" rx="1"/>
+  <!-- Keep stone rows -->
+  <rect x="36"  y="72"  width="96" height="5" fill="none" stroke="#90A4AE" stroke-width="0.8" opacity="0.6" rx="1"/>
+  <rect x="36"  y="85"  width="96" height="5" fill="none" stroke="#90A4AE" stroke-width="0.8" opacity="0.6" rx="1"/>
+  <rect x="36"  y="98"  width="96" height="5" fill="none" stroke="#90A4AE" stroke-width="0.8" opacity="0.6" rx="1"/>
+  <rect x="36" y="150"  width="96" height="5" fill="none" stroke="#90A4AE" stroke-width="0.8" opacity="0.6" rx="1"/>
+  <!-- Purple banner / sign -->
+  <rect x="42" y="68" width="84" height="24" fill="#4A148C" rx="4"/>
+  <text x="84" y="78" text-anchor="middle" font-size="7.5" fill="#FFD700"
+        font-family="'Fredoka One',cursive" font-weight="bold">👑 LEMON</text>
+  <text x="84" y="88" text-anchor="middle" font-size="7.5" fill="#FFD700"
+        font-family="'Fredoka One',cursive" font-weight="bold">EMPIRE</text>
+  <!-- Archway / gate -->
+  <rect x="54" y="108" width="60" height="70" fill="#263238" rx="2"/>
+  <path d="M54,132 Q84,100 114,132" fill="#37474F"/>
+  <!-- Gate portcullis bars -->
+  <line x1="64"  y1="132" x2="64"  y2="178" stroke="#455A64" stroke-width="2.5" opacity="0.7"/>
+  <line x1="74"  y1="132" x2="74"  y2="178" stroke="#455A64" stroke-width="2.5" opacity="0.7"/>
+  <line x1="84"  y1="132" x2="84"  y2="178" stroke="#455A64" stroke-width="2.5" opacity="0.7"/>
+  <line x1="94"  y1="132" x2="94"  y2="178" stroke="#455A64" stroke-width="2.5" opacity="0.7"/>
+  <line x1="104" y1="132" x2="104" y2="178" stroke="#455A64" stroke-width="2.5" opacity="0.7"/>
+  <line x1="54"  y1="148" x2="114" y2="148" stroke="#455A64" stroke-width="2" opacity="0.7"/>
+  <line x1="54"  y1="160" x2="114" y2="160" stroke="#455A64" stroke-width="2" opacity="0.7"/>
+  <!-- Counter top (clean, spans full width) -->
+  <rect x="0"   y="158" width="168" height="9" fill="#546E7A" rx="3"/>
+  <!-- Counter surface subtle detail -->
+  <line x1="36" y1="158" x2="132" y2="158" stroke="#78909C" stroke-width="0.8" opacity="0.4"/>
+  ${ex}
 </svg>`;
 }
 
@@ -708,10 +1062,16 @@ function _spawnCustomer(ss) {
 
   ss.inTransit++;
 
+  // Double-rAF: first frame commits the DOM node at left:-60px,
+  // second frame ensures the browser has painted that position
+  // so the CSS transition actually starts FROM off-screen (fixes mobile).
   requestAnimationFrame(() => {
-    el.classList.add('is-walking');
-    el.style.transition = `left ${walkMs}ms linear`;
-    el.style.left = targetX + 'px';
+    void el.offsetLeft; // force reflow so initial position is registered
+    requestAnimationFrame(() => {
+      el.classList.add('is-walking');
+      el.style.transition = `left ${walkMs}ms linear`;
+      el.style.left = targetX + 'px';
+    });
   });
 
   setTimeout(() => {
