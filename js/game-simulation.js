@@ -216,128 +216,163 @@ function _extrasDefault(u) {
 
 function _extrasClassic(u) {
   // Coordinate space: viewBox="0 0 160 168"
-  // Counter top: y=113; cups x=12–46; pitcher x=66–106; ice bucket x=116–150
+  // Roof peak y=10, gutter y=64, stand body y=67–168, counter top y=113
   const parts = [];
+
   if (u.canopy) {
-    // Shade skirts hang from gutter/fascia line (y=64) across the full stand width
-    parts.push(_eqCanopyPanel(0,   64, 40));
-    parts.push(_eqCanopyPanel(42,  64, 38));
-    parts.push(_eqCanopyPanel(82,  64, 38));
-    parts.push(_eqCanopyPanel(122, 64, 38));
-  }
-  if (u.soundsystem) {
-    parts.push(_eqSpeaker(0, 62));
-    parts.push(_eqSpeaker(149, 62));
+    // LEFT-SIDE queue shade: arm from left edge along gutter, fabric hangs down
+    parts.push(`
+      <rect x="2" y="62" width="60" height="4" rx="2" fill="#5D4037"/>
+      <rect x="2" y="64" width="28" height="50" rx="3" fill="#FF8C00" opacity="0.88"/>
+      <rect x="2" y="64" width="7"  height="50" rx="0" fill="#FFF8E1" opacity="0.72"/>
+      <rect x="23" y="64" width="7" height="50" rx="0" fill="#FFF8E1" opacity="0.72"/>
+      <rect x="2" y="64" width="3"  height="50" rx="1.5" fill="#5D4037"/>
+      <rect x="2" y="112" width="28" height="3" rx="1.5" fill="#E65100" opacity="0.55"/>
+    `);
   }
   if (u.neon) {
-    // Top strip below gutter (y≈69), bottom strip above counter (y=109)
-    parts.push(_eqNeon(3, 157, 68, 109));
+    // Neon along the ROOF RIDGE (peak at y=10) and gutter line — clearly at the top
+    parts.push(`
+      <polygon points="0,62 80,10 160,62" fill="none" stroke="#FFD700" stroke-width="4" opacity="0.9"/>
+      <polygon points="0,62 80,10 160,62" fill="none" stroke="#FF4081" stroke-width="2" opacity="0.65" stroke-dasharray="7,5"/>
+      <circle cx="80"  cy="10" r="4" fill="#FFD700" opacity="0.9"/>
+      <circle cx="0"   cy="62" r="3" fill="#FF4081" opacity="0.8"/>
+      <circle cx="160" cy="62" r="3" fill="#FF4081" opacity="0.8"/>
+    `);
+  }
+  if (u.soundsystem) {
+    parts.push(_eqSpeaker(0,   62));
+    parts.push(_eqSpeaker(149, 62));
   }
   if (u.fridge) {
     parts.push(_eqFridge(0, 100));
   }
   if (u.juicer || u.powerjuicer) {
-    // Between cups (x=46) and pitcher (x=66): gap x=47–65, y=97–113
-    parts.push(_eqJuicer(47, 94, !!u.powerjuicer));
+    // Left counter zone x=8–26, y=120–140
+    parts.push(_eqJuicer(8, 118, !!u.powerjuicer));
   }
   if (u.register) {
-    // Right of pitcher handle (x≈106) and left of ice bucket (x=116): x=94–116
-    parts.push(_eqRegister(94, 95));
+    // Right counter zone x=130–152, y=120–137
+    parts.push(_eqRegister(130, 120));
   }
   if (u.dispenser) {
-    // Overlaps pitcher station center, y=95–117
-    parts.push(_eqDispenser(62, 92));
+    // Center counter x=62–80, y=118–140
+    parts.push(_eqDispenser(62, 118));
   }
   if (u.icemaker) {
-    parts.push(_eqIcemaker(148, 90));
+    parts.push(_eqIcemaker(148, 92));
   } else if (u.iceomatic) {
-    parts.push(_eqIceomatic(149, 94));
+    parts.push(_eqIceomatic(149, 96));
   }
   return parts.join('');
 }
 
 function _extrasLemon(u) {
   // Coordinate space: viewBox="0 0 148 168"
-  // Counter base: y=132; cups x=16–42; pitcher x=56–90; ice bucket x=98–124
+  // Lemon body: ellipse cx=74 cy=76 rx=64 ry=62 → left edge ≈x=10, bottom ≈y=138
+  // Counter: y=132–168
   const parts = [];
+
   if (u.canopy) {
-    // Shade skirts hang from the bottom of the lemon ellipse arc (bottom ≈ y=138),
-    // giving side coverage left and right of the counter zone
-    parts.push(_eqCanopyPanel(6,   128, 30));
-    parts.push(_eqCanopyPanel(38,  128, 30));
-    parts.push(_eqCanopyPanel(74,  128, 30));
-    parts.push(_eqCanopyPanel(108, 128, 30));
-  }
-  if (u.soundsystem) {
-    // On the lemon sides (outer edge of ellipse body)
-    parts.push(_eqSpeaker(0, 68));
-    parts.push(_eqSpeaker(137, 68));
+    // LEFT-SIDE shade: arm from lemon body left side (x≈10, y=76),
+    // fabric hangs down the left to protect the queue
+    parts.push(`
+      <rect x="4" y="74" width="6"  height="62" rx="3" fill="#F57F17"/>
+      <rect x="0" y="76" width="10" height="52" rx="3" fill="#FF8C00" opacity="0.88"/>
+      <rect x="0" y="76" width="3"  height="52" rx="0" fill="#FFF8E1" opacity="0.72"/>
+      <rect x="7" y="76" width="3"  height="52" rx="0" fill="#FFF8E1" opacity="0.72"/>
+      <rect x="0" y="126" width="10" height="3" rx="1.5" fill="#E65100" opacity="0.55"/>
+    `);
   }
   if (u.neon) {
-    // Strips along counter top and just above counter
-    parts.push(_eqNeon(6, 142, 109, 128));
+    // Neon glow along the TOP of the lemon ellipse outline
+    parts.push(`
+      <path d="M10,76 Q74,14 138,76" fill="none" stroke="#FFD700" stroke-width="4" opacity="0.9" stroke-linecap="round"/>
+      <path d="M10,76 Q74,14 138,76" fill="none" stroke="#FF4081" stroke-width="2" opacity="0.65" stroke-linecap="round" stroke-dasharray="7,5"/>
+      <circle cx="74"  cy="14" r="4" fill="#FFD700" opacity="0.9"/>
+      <circle cx="10"  cy="76" r="3" fill="#FF4081" opacity="0.8"/>
+      <circle cx="138" cy="76" r="3" fill="#FF4081" opacity="0.8"/>
+    `);
+  }
+  if (u.soundsystem) {
+    parts.push(_eqSpeaker(0,   68));
+    parts.push(_eqSpeaker(137, 68));
   }
   if (u.fridge) {
     parts.push(_eqFridge(0, 124));
   }
   if (u.juicer || u.powerjuicer) {
-    // Between cups (x=42) and pitcher (x=56): gap is x=43–56, about 13px
-    parts.push(_eqJuicer(43, 116, !!u.powerjuicer));
+    // Left counter zone x=10–28, y=138–158
+    parts.push(_eqJuicer(10, 136, !!u.powerjuicer));
   }
   if (u.register) {
-    // Between pitcher handle (x≈90) and ice bucket (x=98): x=80–98
-    parts.push(_eqRegister(80, 117));
+    // Right counter zone x=110–132, y=138–155
+    parts.push(_eqRegister(110, 138));
   }
   if (u.dispenser) {
-    parts.push(_eqDispenser(55, 113));
+    // Center counter x=56–74, y=136–158
+    parts.push(_eqDispenser(56, 136));
   }
   if (u.icemaker) {
-    parts.push(_eqIcemaker(130, 116));
+    parts.push(_eqIcemaker(130, 128));
   } else if (u.iceomatic) {
-    parts.push(_eqIceomatic(131, 118));
+    parts.push(_eqIceomatic(131, 132));
   }
   return parts.join('');
 }
 
 function _extrasCastle(u) {
   // Coordinate space: viewBox="0 0 168 178"
-  // Counter top: y=158; cups x=38–68; pitcher x=72–103; ice bucket x=106–134
-  // Left tower: x=0–36; Right tower: x=132–168
+  // Left tower: x=0–36; Keep: x=34–134; Right tower: x=132–168
+  // Battlements top y=32 (towers), keep top y=48; counter top y=158
   const parts = [];
+
   if (u.canopy) {
-    // Shade cloth draped from the top of the keep wall, filling the merlon gaps
-    parts.push(_eqCanopyPanel(36, 60, 24));
-    parts.push(_eqCanopyPanel(62, 60, 24));
-    parts.push(_eqCanopyPanel(88, 60, 24));
-    parts.push(_eqCanopyPanel(114,60, 24));
-  }
-  if (u.soundsystem) {
-    // Inside tower windows (tower window at x=10–26, y=68–90 for left; x=142–158 right)
-    parts.push(_eqSpeaker(9, 108));
-    parts.push(_eqSpeaker(148, 108));
+    // LEFT-SIDE shade extending from the left tower outward:
+    // A shade arm at tower-top height, fabric draping on the left side
+    parts.push(`
+      <rect x="0" y="42" width="3"  height="90" rx="1.5" fill="#546E7A"/>
+      <rect x="0" y="42" width="14" height="78" rx="3" fill="#FF8C00" opacity="0.88"/>
+      <rect x="0" y="42" width="4"  height="78" rx="0" fill="#FFF8E1" opacity="0.72"/>
+      <rect x="10" y="42" width="4" height="78" rx="0" fill="#FFF8E1" opacity="0.72"/>
+      <rect x="0" y="118" width="14" height="3" rx="1.5" fill="#E65100" opacity="0.55"/>
+    `);
   }
   if (u.neon) {
-    // Along the castle wall top (keep crenellations at y=48) + counter strip
-    parts.push(_eqNeon(36, 132, 62, 155));
+    // Neon along the TOP of the castle — battlement crests of the keep wall
+    parts.push(`
+      <line x1="34"  y1="48" x2="134" y2="48" stroke="#FFD700" stroke-width="4" opacity="0.9" stroke-linecap="round"/>
+      <line x1="34"  y1="48" x2="134" y2="48" stroke="#FF4081" stroke-width="2" opacity="0.7" stroke-linecap="round" stroke-dasharray="7,5"/>
+      <line x1="0"   y1="32" x2="36"  y2="32" stroke="#FFD700" stroke-width="3" opacity="0.8" stroke-linecap="round"/>
+      <line x1="132" y1="32" x2="168" y2="32" stroke="#FFD700" stroke-width="3" opacity="0.8" stroke-linecap="round"/>
+      <circle cx="34"  cy="48" r="3.5" fill="#FFD700" opacity="0.9"/>
+      <circle cx="84"  cy="48" r="3.5" fill="#FF4081" opacity="0.9"/>
+      <circle cx="134" cy="48" r="3.5" fill="#FFD700" opacity="0.9"/>
+    `);
+  }
+  if (u.soundsystem) {
+    // Speakers mounted inside the tower windows
+    parts.push(_eqSpeaker(9,   108));
+    parts.push(_eqSpeaker(148, 108));
   }
   if (u.fridge) {
-    // Left tower counter area, below the arrow slit (y=114+)
+    // Left tower lower section y=128–160
     parts.push(_eqFridge(3, 128));
   }
   if (u.juicer || u.powerjuicer) {
-    // Left tower counter: x=5–23, y=140–158
-    parts.push(_eqJuicer(5, 138, !!u.powerjuicer));
+    // Left side of gate counter x=38–56, y=148–168
+    parts.push(_eqJuicer(38, 146, !!u.powerjuicer));
   }
   if (u.register) {
-    // Right tower counter: x=136–158, y=140–158
-    parts.push(_eqRegister(136, 140));
+    // Right side of gate counter x=110–132, y=148–165
+    parts.push(_eqRegister(110, 148));
   }
   if (u.dispenser) {
-    // Castle gate area (above portcullis archway): x=70–88, y=138–160
-    parts.push(_eqDispenser(69, 136));
+    // Center gate — dispenser at x=70–88, y=146–168
+    parts.push(_eqDispenser(70, 146));
   }
   if (u.icemaker) {
-    // Right tower, tall: x=150–166, y=120–148
+    // Right tower lower section
     parts.push(_eqIcemaker(150, 122));
   } else if (u.iceomatic) {
     parts.push(_eqIceomatic(151, 128));
