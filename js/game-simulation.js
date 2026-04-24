@@ -136,67 +136,73 @@ function _eqSpeaker(x, y) {
     <circle cx="${x+5.5}" cy="${y+17}" r="1.5" fill="#37474F"/>`;
 }
 
-// Neon strip pair (top + bottom) — takes full-width x1→x2 and two y positions
-function _eqNeon(x1, x2, yTop, yBot) {
-  const w = x2 - x1;
+// Dark neon sign board matching the shop icon design.
+// cx=centre x, signY=top of board, w=board width, h=board height
+function _eqNeonSign(cx, signY, w, h) {
+  const wx = Math.round(w * 0.28);
+  const fs = Math.max(6, Math.round(h * 0.42));
   return `
-    <rect x="${x1}" y="${yTop}" width="${w}" height="3"   rx="1.5" fill="#FFD700" opacity="0.92"/>
-    <rect x="${x1}" y="${yTop}" width="${w}" height="1.2" rx="0.6" fill="#FFF9C4" opacity="0.6"/>
-    <rect x="${x1}" y="${yBot}" width="${w}" height="3"   rx="1.5" fill="#FF4081" opacity="0.88"/>
-    <rect x="${x1}" y="${yBot}" width="${w}" height="1.2" rx="0.6" fill="#FCE4EC" opacity="0.5"/>`;
-}
-
-// Canopy shade panel — orange/white striped to match the awning
-function _eqCanopyPanel(x, y, w) {
-  const sw = Math.max(4, Math.round(w / 4));
-  return `
-    <rect x="${x}" y="${y}" width="${w}" height="11" rx="4" fill="#FF8C00" opacity="0.92"/>
-    <rect x="${x+sw}"   y="${y}" width="${sw}" height="11" rx="0" fill="#FFF8E1" opacity="0.75"/>
-    <rect x="${x+sw*3}" y="${y}" width="${sw}" height="11" rx="0" fill="#FFF8E1" opacity="0.75"/>
-    <rect x="${x}" y="${y+8}" width="${w}" height="3" rx="1.5" fill="#E65100" opacity="0.5"/>
-    <rect x="${x}" y="${y}" width="${w}" height="11" rx="4" fill="none" stroke="#E65100" stroke-width="0.8" opacity="0.55"/>`;
+    <!-- Hanging wires -->
+    <line x1="${cx-wx}" y1="${signY-10}" x2="${cx-wx}" y2="${signY}" stroke="#90A4AE" stroke-width="1.5"/>
+    <line x1="${cx+wx}" y1="${signY-10}" x2="${cx+wx}" y2="${signY}" stroke="#90A4AE" stroke-width="1.5"/>
+    <circle cx="${cx-wx}" cy="${signY-10}" r="2" fill="#78909C"/>
+    <circle cx="${cx+wx}" cy="${signY-10}" r="2" fill="#78909C"/>
+    <!-- Dark board -->
+    <rect x="${cx-w/2}" y="${signY}" width="${w}" height="${h}" rx="5" fill="#0D0D1A"/>
+    <!-- Outer glow border -->
+    <rect x="${cx-w/2}" y="${signY}" width="${w}" height="${h}" rx="5" fill="none" stroke="#FFD740" stroke-width="2" opacity="0.55"/>
+    <!-- Inner dashed border -->
+    <rect x="${cx-w/2+3}" y="${signY+3}" width="${w-6}" height="${h-6}" rx="4" fill="none" stroke="#FF8C00" stroke-width="1.2" stroke-dasharray="4,2" opacity="0.6"/>
+    <!-- LEMON neon text -->
+    <text x="${cx}" y="${signY+Math.round(h*0.67)}" text-anchor="middle" font-size="${fs}" font-weight="bold" font-family="'Fredoka One',cursive" fill="#FFD740" stroke="#FF8C00" stroke-width="0.4">LEMON</text>
+    <!-- Glow halo -->
+    <ellipse cx="${cx}" cy="${signY+Math.round(h*0.62)}" rx="${Math.round(w*0.28)}" ry="${Math.round(h*0.14)}" fill="#FFD740" opacity="0.07"/>
+    <!-- Corner sparkles -->
+    <text x="${cx-w/2+3}" y="${signY+11}" font-size="5.5" fill="#FFD740" opacity="0.9" font-family="sans-serif">&#x2726;</text>
+    <text x="${cx+w/2-9}" y="${signY+11}" font-size="5.5" fill="#FFD740" opacity="0.9" font-family="sans-serif">&#x2726;</text>`;
 }
 
 // ── Lady server SVG (drawn inside stand, behind counter) ─────────────────────
 // cx = horizontal centre, counterY = y where counter top starts.
 // Only upper body is drawn — lower body is "hidden" behind the counter.
 function _eqLadyServer(cx, counterY) {
-  const hy = counterY - 30; // head centre
+  // Smaller lady server — ~65% of previous size
+  const hy = counterY - 22; // head centre (closer to counter)
   return `
-    <!-- Apron / upper body (just above counter) -->
-    <rect x="${cx-14}" y="${counterY-16}" width="28" height="20" rx="3" fill="#FF8C00"/>
-    <rect x="${cx-8}"  y="${counterY-14}" width="16" height="13" rx="2" fill="white" opacity="0.75"/>
+    <!-- Apron / upper body -->
+    <rect x="${cx-10}" y="${counterY-12}" width="20" height="15" rx="3" fill="#FF8C00"/>
+    <rect x="${cx-6}"  y="${counterY-10}" width="12" height="10" rx="2" fill="white" opacity="0.75"/>
     <!-- Neck -->
-    <rect x="${cx-4}" y="${hy+11}" width="8" height="10" rx="3" fill="#F4C89A"/>
+    <rect x="${cx-3}" y="${hy+9}" width="6" height="7" rx="2" fill="#F4C89A"/>
     <!-- Head -->
-    <ellipse cx="${cx}" cy="${hy}" rx="13" ry="13" fill="#F4C89A"/>
+    <ellipse cx="${cx}" cy="${hy}" rx="9" ry="9" fill="#F4C89A"/>
     <!-- Hair bun -->
-    <ellipse cx="${cx}" cy="${hy-9}" rx="14" ry="7" fill="#5D4037"/>
-    <circle  cx="${cx+10}" cy="${hy-6}" r="6" fill="#5D4037"/>
+    <ellipse cx="${cx}" cy="${hy-6}" rx="10" ry="5" fill="#5D4037"/>
+    <circle  cx="${cx+7}" cy="${hy-4}" r="4.5" fill="#5D4037"/>
     <!-- Chef hat body -->
-    <rect x="${cx-11}" y="${hy-24}" width="22" height="11" rx="2" fill="white" stroke="#E0E0E0" stroke-width="0.8"/>
-    <!-- Chef hat top puff -->
-    <ellipse cx="${cx}" cy="${hy-24}" rx="13" ry="6" fill="white" stroke="#E0E0E0" stroke-width="0.8"/>
+    <rect x="${cx-8}" y="${hy-17}" width="16" height="8" rx="2" fill="white" stroke="#E0E0E0" stroke-width="0.8"/>
+    <!-- Chef hat puff -->
+    <ellipse cx="${cx}" cy="${hy-17}" rx="9" ry="4.5" fill="white" stroke="#E0E0E0" stroke-width="0.8"/>
     <!-- Hat band -->
-    <rect x="${cx-11}" y="${hy-15}" width="22" height="3" rx="1" fill="#BDBDBD" opacity="0.55"/>
-    <!-- Eyes (bright, friendly) -->
-    <ellipse cx="${cx-5}" cy="${hy-1}" rx="2.2" ry="2.8" fill="white"/>
-    <ellipse cx="${cx+5}" cy="${hy-1}" rx="2.2" ry="2.8" fill="white"/>
-    <circle  cx="${cx-5}" cy="${hy-1}" r="1.6" fill="#2E4057"/>
-    <circle  cx="${cx+5}" cy="${hy-1}" r="1.6" fill="#2E4057"/>
-    <circle  cx="${cx-4.3}" cy="${hy-1.8}" r="0.6" fill="white"/>
-    <circle  cx="${cx+5.7}" cy="${hy-1.8}" r="0.6" fill="white"/>
-    <!-- Lashes (upper arc lines) -->
-    <path d="M${cx-7},${hy-3.5} Q${cx-5},${hy-6} ${cx-3},${hy-3.5}" fill="none" stroke="#4E342E" stroke-width="1.1" stroke-linecap="round"/>
-    <path d="M${cx+3},${hy-3.5} Q${cx+5},${hy-6} ${cx+7},${hy-3.5}" fill="none" stroke="#4E342E" stroke-width="1.1" stroke-linecap="round"/>
+    <rect x="${cx-8}" y="${hy-11}" width="16" height="2.5" rx="1" fill="#BDBDBD" opacity="0.5"/>
+    <!-- Eyes -->
+    <ellipse cx="${cx-4}" cy="${hy-1}" rx="1.6" ry="2" fill="white"/>
+    <ellipse cx="${cx+4}" cy="${hy-1}" rx="1.6" ry="2" fill="white"/>
+    <circle  cx="${cx-4}" cy="${hy-1}" r="1.1" fill="#2E4057"/>
+    <circle  cx="${cx+4}" cy="${hy-1}" r="1.1" fill="#2E4057"/>
+    <circle  cx="${cx-3.4}" cy="${hy-1.6}" r="0.45" fill="white"/>
+    <circle  cx="${cx+4.6}" cy="${hy-1.6}" r="0.45" fill="white"/>
+    <!-- Lashes -->
+    <path d="M${cx-6},${hy-3} Q${cx-4},${hy-5.5} ${cx-2},${hy-3}" fill="none" stroke="#4E342E" stroke-width="1" stroke-linecap="round"/>
+    <path d="M${cx+2},${hy-3} Q${cx+4},${hy-5.5} ${cx+6},${hy-3}" fill="none" stroke="#4E342E" stroke-width="1" stroke-linecap="round"/>
     <!-- Smile -->
-    <path d="M${cx-5},${hy+5.5} Q${cx},${hy+10} ${cx+5},${hy+5.5}" fill="none" stroke="#D32F2F" stroke-width="1.6" stroke-linecap="round"/>
-    <!-- Rosy cheeks -->
-    <ellipse cx="${cx-9}" cy="${hy+3}" rx="4.5" ry="3.5" fill="#FFCDD2" opacity="0.6"/>
-    <ellipse cx="${cx+9}" cy="${hy+3}" rx="4.5" ry="3.5" fill="#FFCDD2" opacity="0.6"/>
-    <!-- Hands resting on counter -->
-    <ellipse cx="${cx-19}" cy="${counterY+1}" rx="6" ry="4" fill="#F4C89A"/>
-    <ellipse cx="${cx+19}" cy="${counterY+1}" rx="6" ry="4" fill="#F4C89A"/>`;
+    <path d="M${cx-4},${hy+4} Q${cx},${hy+7.5} ${cx+4},${hy+4}" fill="none" stroke="#D32F2F" stroke-width="1.3" stroke-linecap="round"/>
+    <!-- Cheeks -->
+    <ellipse cx="${cx-7}" cy="${hy+2}" rx="3.5" ry="2.5" fill="#FFCDD2" opacity="0.6"/>
+    <ellipse cx="${cx+7}" cy="${hy+2}" rx="3.5" ry="2.5" fill="#FFCDD2" opacity="0.6"/>
+    <!-- Hands -->
+    <ellipse cx="${cx-14}" cy="${counterY+1}" rx="4.5" ry="3" fill="#F4C89A"/>
+    <ellipse cx="${cx+14}" cy="${counterY+1}" rx="4.5" ry="3" fill="#F4C89A"/>`;
 }
 
 // ── External staff: full-body illustrated SVGs ────────────────────────────────
@@ -310,94 +316,54 @@ function _svgMusician() {
 
 function _extrasDefault(u) {
   // Coordinate space: viewBox="0 0 138 158"
-  // Counter area: y=104–158; sign: y=84–104; awning arc bottom: y=38
+  // Counter top y=104, counter body y=113–158; awning arc bottom y=38
   const parts = [];
 
-  // Lady server — rendered FIRST so equipment appears in front of her
+  // Lady server — drawn first so equipment renders in front
   if ((S.hiredToday || {}).lady) {
     parts.push(_eqLadyServer(69, 104));
   }
-
-  if (u.canopy) {
-    // LEFT-SIDE shade for customer queue:
-    // Horizontal arm from the main pole (x=68) extends to the left edge,
-    // then fabric hangs down creating a side shelter.
-    parts.push(`
-      <rect x="4" y="35" width="64" height="4" rx="2" fill="#6D4C41"/>
-      <rect x="4" y="37" width="28" height="52" rx="3" fill="#FF8C00" opacity="0.88"/>
-      <rect x="4" y="37" width="7"  height="52" rx="0" fill="#FFF8E1" opacity="0.72"/>
-      <rect x="25" y="37" width="7" height="52" rx="0" fill="#FFF8E1" opacity="0.72"/>
-      <rect x="4" y="37" width="3"  height="52" rx="1.5" fill="#6D4C41"/>
-      <rect x="4" y="87" width="28" height="3" rx="1.5" fill="#E65100" opacity="0.55"/>
-    `);
-  }
+  // Canopy is rendered as a separate overlay element (see buildCanopyOverlay)
   if (u.neon) {
-    // Neon glow along the TOP of the awning arc (clearly visible above everything)
-    parts.push(`
-      <path d="M4,38 Q70,2 134,38" fill="none" stroke="#FFD700" stroke-width="4" opacity="0.95" stroke-linecap="round"/>
-      <path d="M4,38 Q70,2 134,38" fill="none" stroke="#FF4081" stroke-width="2" opacity="0.75" stroke-linecap="round" stroke-dasharray="7,5"/>
-      <circle cx="4"   cy="38" r="3.5" fill="#FFD700" opacity="0.9"/>
-      <circle cx="70"  cy="2"  r="3.5" fill="#FF4081" opacity="0.9"/>
-      <circle cx="134" cy="38" r="3.5" fill="#FFD700" opacity="0.9"/>
-    `);
+    // Dark sign board overlaying the existing sign panel (x=12,y=84,w=114,h=20)
+    parts.push(_eqNeonSign(69, 84, 110, 22));
   }
   if (u.soundsystem) {
     parts.push(_eqSpeaker(0, 47));
     parts.push(_eqSpeaker(127, 47));
   }
   if (u.fridge) {
-    parts.push(_eqFridge(0, 95));
+    parts.push(_eqFridge(0, 93));
   }
   if (u.juicer || u.powerjuicer) {
-    // Left counter zone (x=8–26, y=110–132)
-    parts.push(_eqJuicer(8, 108, !!u.powerjuicer));
+    parts.push(_eqJuicer(8, 106, !!u.powerjuicer));
   }
   if (u.register) {
-    // Right counter zone (x=108–130, y=110–128)
-    parts.push(_eqRegister(108, 110));
+    parts.push(_eqRegister(107, 106));
   }
   if (u.dispenser) {
-    // Center counter (x=57–75, y=108–130)
-    parts.push(_eqDispenser(57, 108));
+    parts.push(_eqDispenser(43, 104));
   }
   if (u.icemaker) {
-    parts.push(_eqIcemaker(118, 100));
+    parts.push(_eqIcemaker(118, 98));
   } else if (u.iceomatic) {
-    parts.push(_eqIceomatic(120, 104));
+    parts.push(_eqIceomatic(120, 102));
   }
   return parts.join('');
 }
 
 function _extrasClassic(u) {
   // Coordinate space: viewBox="0 0 160 168"
-  // Roof peak y=10, gutter y=64, stand body y=67–168, counter top y=113
+  // Roof peak y=10, gutter y=64, counter top y=113, counter body y=123–168
   const parts = [];
 
-  // Lady server in the central serving window area
   if ((S.hiredToday || {}).lady) {
     parts.push(_eqLadyServer(80, 113));
   }
-
-  if (u.canopy) {
-    // LEFT-SIDE queue shade: arm from left edge along gutter, fabric hangs down
-    parts.push(`
-      <rect x="2" y="62" width="60" height="4" rx="2" fill="#5D4037"/>
-      <rect x="2" y="64" width="28" height="50" rx="3" fill="#FF8C00" opacity="0.88"/>
-      <rect x="2" y="64" width="7"  height="50" rx="0" fill="#FFF8E1" opacity="0.72"/>
-      <rect x="23" y="64" width="7" height="50" rx="0" fill="#FFF8E1" opacity="0.72"/>
-      <rect x="2" y="64" width="3"  height="50" rx="1.5" fill="#5D4037"/>
-      <rect x="2" y="112" width="28" height="3" rx="1.5" fill="#E65100" opacity="0.55"/>
-    `);
-  }
+  // Canopy handled externally
   if (u.neon) {
-    // Neon along the ROOF RIDGE (peak at y=10) and gutter line — clearly at the top
-    parts.push(`
-      <polygon points="0,62 80,10 160,62" fill="none" stroke="#FFD700" stroke-width="4" opacity="0.9"/>
-      <polygon points="0,62 80,10 160,62" fill="none" stroke="#FF4081" stroke-width="2" opacity="0.65" stroke-dasharray="7,5"/>
-      <circle cx="80"  cy="10" r="4" fill="#FFD700" opacity="0.9"/>
-      <circle cx="0"   cy="62" r="3" fill="#FF4081" opacity="0.8"/>
-      <circle cx="160" cy="62" r="3" fill="#FF4081" opacity="0.8"/>
-    `);
+    // Overlays the centre sign panel (x=58,y=78,w=44,h=30) — wider board for visibility
+    parts.push(_eqNeonSign(80, 74, 86, 30));
   }
   if (u.soundsystem) {
     parts.push(_eqSpeaker(0,   62));
@@ -407,146 +373,172 @@ function _extrasClassic(u) {
     parts.push(_eqFridge(0, 100));
   }
   if (u.juicer || u.powerjuicer) {
-    // Left counter zone x=8–26, y=120–140
-    parts.push(_eqJuicer(8, 118, !!u.powerjuicer));
+    parts.push(_eqJuicer(8, 116, !!u.powerjuicer));
   }
   if (u.register) {
-    // Right counter zone x=130–152, y=120–137
-    parts.push(_eqRegister(130, 120));
+    parts.push(_eqRegister(130, 116));
   }
   if (u.dispenser) {
-    // Center counter x=62–80, y=118–140
-    parts.push(_eqDispenser(62, 118));
+    parts.push(_eqDispenser(56, 114));
   }
   if (u.icemaker) {
-    parts.push(_eqIcemaker(148, 92));
+    parts.push(_eqIcemaker(148, 90));
   } else if (u.iceomatic) {
-    parts.push(_eqIceomatic(149, 96));
+    parts.push(_eqIceomatic(149, 94));
   }
   return parts.join('');
 }
 
 function _extrasLemon(u) {
   // Coordinate space: viewBox="0 0 148 168"
-  // Lemon body: ellipse cx=74 cy=76 rx=64 ry=62 → left edge ≈x=10, bottom ≈y=138
-  // Counter: y=132–168
+  // Lemon body cx=74 cy=76 rx=64 ry=62; window cx=74 cy=74 rx=32 ry=28
+  // Counter top y=132, counter body y=142–168
   const parts = [];
 
-  // Lady server — peeks through the lemon's serving window area
   if ((S.hiredToday || {}).lady) {
     parts.push(_eqLadyServer(74, 132));
   }
-
-  if (u.canopy) {
-    // LEFT-SIDE shade: arm from lemon body left side (x≈10, y=76),
-    // fabric hangs down the left to protect the queue
-    parts.push(`
-      <rect x="4" y="74" width="6"  height="62" rx="3" fill="#F57F17"/>
-      <rect x="0" y="76" width="10" height="52" rx="3" fill="#FF8C00" opacity="0.88"/>
-      <rect x="0" y="76" width="3"  height="52" rx="0" fill="#FFF8E1" opacity="0.72"/>
-      <rect x="7" y="76" width="3"  height="52" rx="0" fill="#FFF8E1" opacity="0.72"/>
-      <rect x="0" y="126" width="10" height="3" rx="1.5" fill="#E65100" opacity="0.55"/>
-    `);
-  }
+  // Canopy handled externally
   if (u.neon) {
-    // Neon glow along the TOP of the lemon ellipse outline
-    parts.push(`
-      <path d="M10,76 Q74,14 138,76" fill="none" stroke="#FFD700" stroke-width="4" opacity="0.9" stroke-linecap="round"/>
-      <path d="M10,76 Q74,14 138,76" fill="none" stroke="#FF4081" stroke-width="2" opacity="0.65" stroke-linecap="round" stroke-dasharray="7,5"/>
-      <circle cx="74"  cy="14" r="4" fill="#FFD700" opacity="0.9"/>
-      <circle cx="10"  cy="76" r="3" fill="#FF4081" opacity="0.8"/>
-      <circle cx="138" cy="76" r="3" fill="#FF4081" opacity="0.8"/>
-    `);
+    // Overlays the oval window sign text area
+    parts.push(_eqNeonSign(74, 55, 56, 22));
   }
   if (u.soundsystem) {
     parts.push(_eqSpeaker(0,   68));
     parts.push(_eqSpeaker(137, 68));
   }
   if (u.fridge) {
-    parts.push(_eqFridge(0, 124));
+    parts.push(_eqFridge(0, 122));
   }
   if (u.juicer || u.powerjuicer) {
-    // Left counter zone x=10–28, y=138–158
-    parts.push(_eqJuicer(10, 136, !!u.powerjuicer));
+    parts.push(_eqJuicer(10, 134, !!u.powerjuicer));
   }
   if (u.register) {
-    // Right counter zone x=110–132, y=138–155
-    parts.push(_eqRegister(110, 138));
+    parts.push(_eqRegister(110, 136));
   }
   if (u.dispenser) {
-    // Center counter x=56–74, y=136–158
-    parts.push(_eqDispenser(56, 136));
+    parts.push(_eqDispenser(54, 132));
   }
   if (u.icemaker) {
-    parts.push(_eqIcemaker(130, 128));
+    parts.push(_eqIcemaker(130, 126));
   } else if (u.iceomatic) {
-    parts.push(_eqIceomatic(131, 132));
+    parts.push(_eqIceomatic(131, 130));
   }
   return parts.join('');
 }
 
 function _extrasCastle(u) {
   // Coordinate space: viewBox="0 0 168 178"
-  // Left tower: x=0–36; Keep: x=34–134; Right tower: x=132–168
-  // Battlements top y=32 (towers), keep top y=48; counter top y=158
+  // Gate opening x=54–114, y=108–178; counter top y=158
+  // Keep wall y=60–178; battlements top y=48
   const parts = [];
 
-  // Lady server — framed by the castle gate arch
   if ((S.hiredToday || {}).lady) {
     parts.push(_eqLadyServer(84, 158));
   }
-
-  if (u.canopy) {
-    // LEFT-SIDE shade extending from the left tower outward:
-    // A shade arm at tower-top height, fabric draping on the left side
-    parts.push(`
-      <rect x="0" y="42" width="3"  height="90" rx="1.5" fill="#546E7A"/>
-      <rect x="0" y="42" width="14" height="78" rx="3" fill="#FF8C00" opacity="0.88"/>
-      <rect x="0" y="42" width="4"  height="78" rx="0" fill="#FFF8E1" opacity="0.72"/>
-      <rect x="10" y="42" width="4" height="78" rx="0" fill="#FFF8E1" opacity="0.72"/>
-      <rect x="0" y="118" width="14" height="3" rx="1.5" fill="#E65100" opacity="0.55"/>
-    `);
-  }
+  // Canopy handled externally
   if (u.neon) {
-    // Neon along the TOP of the castle — battlement crests of the keep wall
-    parts.push(`
-      <line x1="34"  y1="48" x2="134" y2="48" stroke="#FFD700" stroke-width="4" opacity="0.9" stroke-linecap="round"/>
-      <line x1="34"  y1="48" x2="134" y2="48" stroke="#FF4081" stroke-width="2" opacity="0.7" stroke-linecap="round" stroke-dasharray="7,5"/>
-      <line x1="0"   y1="32" x2="36"  y2="32" stroke="#FFD700" stroke-width="3" opacity="0.8" stroke-linecap="round"/>
-      <line x1="132" y1="32" x2="168" y2="32" stroke="#FFD700" stroke-width="3" opacity="0.8" stroke-linecap="round"/>
-      <circle cx="34"  cy="48" r="3.5" fill="#FFD700" opacity="0.9"/>
-      <circle cx="84"  cy="48" r="3.5" fill="#FF4081" opacity="0.9"/>
-      <circle cx="134" cy="48" r="3.5" fill="#FFD700" opacity="0.9"/>
-    `);
+    // Overlays the purple banner (x=42,y=68,w=84,h=24)
+    parts.push(_eqNeonSign(84, 68, 82, 24));
   }
   if (u.soundsystem) {
-    // Speakers mounted inside the tower windows
     parts.push(_eqSpeaker(9,   108));
     parts.push(_eqSpeaker(148, 108));
   }
   if (u.fridge) {
-    // Left tower lower section y=128–160
-    parts.push(_eqFridge(3, 128));
+    parts.push(_eqFridge(3, 126));
   }
   if (u.juicer || u.powerjuicer) {
-    // Left side of gate counter x=38–56, y=148–168
-    parts.push(_eqJuicer(38, 146, !!u.powerjuicer));
+    // Inside gate upper area
+    parts.push(_eqJuicer(56, 120, !!u.powerjuicer));
   }
   if (u.register) {
-    // Right side of gate counter x=110–132, y=148–165
-    parts.push(_eqRegister(110, 148));
+    parts.push(_eqRegister(96, 122));
   }
   if (u.dispenser) {
-    // Center gate — dispenser at x=70–88, y=146–168
-    parts.push(_eqDispenser(70, 146));
+    parts.push(_eqDispenser(70, 118));
   }
   if (u.icemaker) {
-    // Right tower lower section
-    parts.push(_eqIcemaker(150, 122));
+    parts.push(_eqIcemaker(150, 118));
   } else if (u.iceomatic) {
-    parts.push(_eqIceomatic(151, 128));
+    parts.push(_eqIceomatic(151, 122));
   }
   return parts.join('');
+}
+
+// Canopy SVG matching the shop icon — umbrella with arc, stripes, fringe, pole, base.
+// standH = height of the stand SVG (so pole reaches the ground).
+function _buildCanopySVG(standH) {
+  const tier = Math.min(3, S.standTier || 0);
+  const clipId = 'cpyOut' + tier;
+  const W = 68;         // SVG width
+  const H = standH;     // SVG height = same as stand so pole reaches ground
+  const cx = 34;        // umbrella horizontal centre
+  const arcY = Math.round(H * 0.36); // arc bottom y
+  const arcH = 26;      // arc rise
+  const aL   = cx - 32; // arc left x  = 2
+  const aR   = cx + 32; // arc right x = 66
+  return `<svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <clipPath id="${clipId}">
+      <path d="M${aL},${arcY} Q${cx},${arcY-arcH} ${aR},${arcY} Z"/>
+    </clipPath>
+  </defs>
+  <!-- Umbrella fabric -->
+  <path d="M${aL},${arcY} Q${cx},${arcY-arcH} ${aR},${arcY} Z" fill="#FF8C00"/>
+  <!-- White stripes (clipped to arc) -->
+  <rect x="${aL+1}"  y="${arcY-arcH}" width="5" height="${arcH+2}" fill="#FFF8E1" opacity="0.82" clip-path="url(#${clipId})"/>
+  <rect x="${aL+11}" y="${arcY-arcH}" width="5" height="${arcH+2}" fill="#FFF8E1" opacity="0.82" clip-path="url(#${clipId})"/>
+  <rect x="${aL+21}" y="${arcY-arcH}" width="5" height="${arcH+2}" fill="#FFF8E1" opacity="0.82" clip-path="url(#${clipId})"/>
+  <rect x="${aL+31}" y="${arcY-arcH}" width="5" height="${arcH+2}" fill="#FFF8E1" opacity="0.82" clip-path="url(#${clipId})"/>
+  <rect x="${aL+41}" y="${arcY-arcH}" width="5" height="${arcH+2}" fill="#FFF8E1" opacity="0.82" clip-path="url(#${clipId})"/>
+  <rect x="${aL+51}" y="${arcY-arcH}" width="5" height="${arcH+2}" fill="#FFF8E1" opacity="0.82" clip-path="url(#${clipId})"/>
+  <!-- Fringe scallops -->
+  <ellipse cx="${aL+4}"  cy="${arcY+2}" rx="3" ry="4" fill="#FFD700"/>
+  <ellipse cx="${aL+13}" cy="${arcY+3}" rx="3" ry="4" fill="#FFD700"/>
+  <ellipse cx="${aL+22}" cy="${arcY+3}" rx="3" ry="4" fill="#FFD700"/>
+  <ellipse cx="${aL+31}" cy="${arcY+3}" rx="3" ry="4" fill="#FFD700"/>
+  <ellipse cx="${aL+40}" cy="${arcY+3}" rx="3" ry="4" fill="#FFD700"/>
+  <ellipse cx="${aL+49}" cy="${arcY+3}" rx="3" ry="4" fill="#FFD700"/>
+  <ellipse cx="${aL+60}" cy="${arcY+2}" rx="3" ry="4" fill="#FFD700"/>
+  <!-- Finial spike at arc peak -->
+  <polygon points="${cx},${arcY-arcH-3} ${cx-4},${arcY-arcH+8} ${cx+4},${arcY-arcH+8}" fill="#FFD700"/>
+  <!-- Centre pole -->
+  <rect x="${cx-2.5}" y="${arcY+2}" width="5" height="${H-arcY-8}" rx="2" fill="#6D4C41"/>
+  <!-- Base plate -->
+  <rect x="${cx-9}" y="${H-8}" width="18" height="8" rx="2" fill="#5D4037"/>
+</svg>`;
+}
+
+// Place the canopy element to the left of the stand with z-index 4 (behind customers/staff).
+function buildCanopyOverlay() {
+  const u = S.upgrades || {};
+  const standWidths  = [138, 160, 148, 168]; // tier 0–3
+  const standHeights = [158, 168, 168, 178];
+  const tier = Math.min(3, S.standTier || 0);
+  const sW   = standWidths[tier];
+  const sH   = standHeights[tier];
+  const rightPx = (sW + 6 - 8) + 'px'; // 8px overlap so pole appears attached
+
+  const sellEl = document.getElementById('scene-canopy');
+  const dayEl  = document.getElementById('day-canopy');
+
+  if (!u.canopy) {
+    if (sellEl) sellEl.innerHTML = '';
+    if (dayEl)  dayEl.innerHTML  = '';
+    return;
+  }
+
+  const svg = _buildCanopySVG(sH);
+
+  if (sellEl) {
+    sellEl.innerHTML = svg;
+    sellEl.style.cssText = `position:absolute;right:${rightPx};bottom:44px;z-index:4;pointer-events:none;`;
+  }
+  if (dayEl) {
+    dayEl.innerHTML = svg;
+    dayEl.style.cssText = `position:absolute;right:${rightPx};bottom:40px;z-index:4;pointer-events:none;`;
+  }
 }
 
 // Dispatcher: picks the right extras function for the current stand tier
@@ -592,7 +584,7 @@ function _standDefault(ex) {
   <!-- Sign board -->
   <rect x="12" y="84" width="114" height="20" fill="#FFFDE7" rx="5" stroke="#FF8C00" stroke-width="1.5"/>
   <text x="69" y="98" text-anchor="middle" font-size="10" fill="#1A1A2E"
-        font-family="'Fredoka One',cursive" font-weight="bold">🍋 LEMONADE</text>
+        font-family="'Fredoka One',cursive" font-weight="bold">LEMONADE</text>
   <!-- Counter top -->
   <rect x="4"  y="104" width="130" height="9" fill="#8D6E63" rx="4"/>
   <!-- Counter body (clean, no clutter — equipment added via extras) -->
@@ -648,7 +640,7 @@ function _standClassic(ex) {
   <line x1="106" y1="94" x2="150" y2="94" stroke="#1565C0" stroke-width="1.5" opacity="0.6"/>
   <!-- Sign board centre (no cashier emoji) -->
   <rect x="58" y="78" width="44" height="30" fill="#E3F2FD" rx="5" stroke="#1565C0" stroke-width="1.5"/>
-  <text x="80" y="90" text-anchor="middle" font-size="8" fill="#1565C0" font-family="'Fredoka One',cursive" font-weight="bold">🏪 CLASSIC</text>
+  <text x="80" y="90" text-anchor="middle" font-size="8" fill="#1565C0" font-family="'Fredoka One',cursive" font-weight="bold">CLASSIC</text>
   <text x="80" y="102" text-anchor="middle" font-size="7" fill="#1565C0" font-family="'Fredoka One',cursive">STAND</text>
   <!-- Counter top -->
   <rect x="0"  y="113" width="160" height="10" fill="#5D4037" rx="4"/>
@@ -692,7 +684,7 @@ function _standLemon(ex) {
   <ellipse cx="74" cy="74" rx="32" ry="28" fill="#FFFDE7"/>
   <ellipse cx="74" cy="74" rx="32" ry="28" fill="none" stroke="#F9A825" stroke-width="2"/>
   <!-- Sign text in window -->
-  <text x="74" y="66" text-anchor="middle" font-size="7.5" fill="#E65100" font-family="'Fredoka One',cursive" font-weight="bold">🍋 LEMON</text>
+  <text x="74" y="66" text-anchor="middle" font-size="7.5" fill="#E65100" font-family="'Fredoka One',cursive" font-weight="bold">LEMON</text>
   <text x="74" y="77" text-anchor="middle" font-size="7.5" fill="#E65100" font-family="'Fredoka One',cursive" font-weight="bold">PALACE</text>
   <!-- Counter base (clean, no clutter) -->
   <rect x="8"  y="132" width="132" height="10" fill="#F57F17" rx="4"/>
@@ -770,7 +762,7 @@ function _standCastle(ex) {
   <!-- Purple banner / sign -->
   <rect x="42" y="68" width="84" height="24" fill="#4A148C" rx="4"/>
   <text x="84" y="78" text-anchor="middle" font-size="7.5" fill="#FFD700"
-        font-family="'Fredoka One',cursive" font-weight="bold">👑 LEMON</text>
+        font-family="'Fredoka One',cursive" font-weight="bold">LEMON</text>
   <text x="84" y="88" text-anchor="middle" font-size="7.5" fill="#FFD700"
         font-family="'Fredoka One',cursive" font-weight="bold">EMPIRE</text>
   <!-- Archway / gate -->
@@ -986,6 +978,7 @@ function setupScene() {
     customers: 'scene-customers',
   });
   buildStaffOverlay();
+  buildCanopyOverlay();
 }
 
 // Render hired staff as visible characters beside the stand.
@@ -1026,6 +1019,7 @@ function setupDayScene() {
     ptag:  'day-ptag',
     // no customers key — static stand only
   });
+  buildCanopyOverlay();
 }
 
 // STAND x-position (left edge from screen right): stand wrapper is right:6px, width 138px â†’ stand left = screenW - 144

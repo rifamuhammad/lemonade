@@ -700,6 +700,15 @@ input[type="range"]::-moz-range-thumb {
   right: 6px;
   bottom: 44px;
   z-index: 10;
+  overflow: visible;
+}
+
+/* Canopy overlay — behind customers (z-index 4 < customers 7) */
+#scene-canopy,
+#day-canopy {
+  position: absolute;
+  z-index: 4;
+  pointer-events: none;
 }
 
 /* Price tag on stand */
