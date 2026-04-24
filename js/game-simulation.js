@@ -316,152 +316,177 @@ function _svgMusician() {
 
 function _extrasDefault(u) {
   // Coordinate space: viewBox="0 0 138 158"
-  // Counter top y=104, counter body y=113–158; awning arc bottom y=38
+  // Counter surface y=104. Items anchor: item_y = counterTopY - itemHeight + 2
+  // Render order: neon (back) → lady (mid) → equipment (front)
   const parts = [];
 
-  // Lady server — drawn first so equipment renders in front
+  // 1. Neon sign first — lady and equipment render on top of it
+  if (u.neon) {
+    parts.push(_eqNeonSign(69, 84, 110, 20));
+  }
+  // 2. Lady server — in front of neon, behind equipment
   if ((S.hiredToday || {}).lady) {
     parts.push(_eqLadyServer(69, 104));
   }
-  // Canopy is rendered as a separate overlay element (see buildCanopyOverlay)
-  if (u.neon) {
-    // Dark sign board overlaying the existing sign panel (x=12,y=84,w=114,h=20)
-    parts.push(_eqNeonSign(69, 84, 110, 22));
-  }
+  // 3. Equipment — renders last (on top of everything)
   if (u.soundsystem) {
-    parts.push(_eqSpeaker(0, 47));
+    parts.push(_eqSpeaker(0,   47));
     parts.push(_eqSpeaker(127, 47));
   }
   if (u.fridge) {
-    parts.push(_eqFridge(0, 93));
+    // Left side beside counter: base at y=104 → fridge top = 104-32 = 72
+    parts.push(_eqFridge(0, 72));
   }
   if (u.juicer || u.powerjuicer) {
-    parts.push(_eqJuicer(8, 106, !!u.powerjuicer));
+    // On counter left (base at y=104): juicer h≈20 → y=84
+    parts.push(_eqJuicer(8, 84, !!u.powerjuicer));
   }
   if (u.register) {
-    parts.push(_eqRegister(107, 106));
+    // On counter right (base at y=104): register h≈17 → y=87
+    parts.push(_eqRegister(107, 87));
   }
   if (u.dispenser) {
-    parts.push(_eqDispenser(43, 104));
+    // On counter centre-left (base at y=104): dispenser h≈22 → y=82
+    parts.push(_eqDispenser(40, 82));
   }
   if (u.icemaker) {
-    parts.push(_eqIcemaker(118, 98));
+    // Right side beside counter: icemaker h≈28 → y=76
+    parts.push(_eqIcemaker(118, 76));
   } else if (u.iceomatic) {
-    parts.push(_eqIceomatic(120, 102));
+    parts.push(_eqIceomatic(120, 84));
   }
   return parts.join('');
 }
 
 function _extrasClassic(u) {
   // Coordinate space: viewBox="0 0 160 168"
-  // Roof peak y=10, gutter y=64, counter top y=113, counter body y=123–168
+  // Counter surface y=113. Items anchor: item_y = 113 - itemHeight + 2
+  // Render order: neon → lady → equipment
   const parts = [];
 
+  // 1. Neon sign (back)
+  if (u.neon) {
+    parts.push(_eqNeonSign(80, 74, 86, 28));
+  }
+  // 2. Lady (mid)
   if ((S.hiredToday || {}).lady) {
     parts.push(_eqLadyServer(80, 113));
   }
-  // Canopy handled externally
-  if (u.neon) {
-    // Overlays the centre sign panel (x=58,y=78,w=44,h=30) — wider board for visibility
-    parts.push(_eqNeonSign(80, 74, 86, 30));
-  }
+  // 3. Equipment (front)
   if (u.soundsystem) {
     parts.push(_eqSpeaker(0,   62));
     parts.push(_eqSpeaker(149, 62));
   }
   if (u.fridge) {
-    parts.push(_eqFridge(0, 100));
+    // Left side: base at y=113 → fridge top = 113-32 = 81
+    parts.push(_eqFridge(0, 81));
   }
   if (u.juicer || u.powerjuicer) {
-    parts.push(_eqJuicer(8, 116, !!u.powerjuicer));
+    // On counter left (base y=113): juicer h≈20 → y=93
+    parts.push(_eqJuicer(8, 93, !!u.powerjuicer));
   }
   if (u.register) {
-    parts.push(_eqRegister(130, 116));
+    // On counter right (base y=113): register h≈17 → y=96
+    parts.push(_eqRegister(130, 96));
   }
   if (u.dispenser) {
-    parts.push(_eqDispenser(56, 114));
+    // On counter centre (base y=113): dispenser h≈22 → y=91
+    parts.push(_eqDispenser(55, 91));
   }
   if (u.icemaker) {
-    parts.push(_eqIcemaker(148, 90));
+    // Right side: icemaker h≈28 → y=85
+    parts.push(_eqIcemaker(148, 85));
   } else if (u.iceomatic) {
-    parts.push(_eqIceomatic(149, 94));
+    parts.push(_eqIceomatic(149, 93));
   }
   return parts.join('');
 }
 
 function _extrasLemon(u) {
   // Coordinate space: viewBox="0 0 148 168"
-  // Lemon body cx=74 cy=76 rx=64 ry=62; window cx=74 cy=74 rx=32 ry=28
-  // Counter top y=132, counter body y=142–168
+  // Counter surface y=132. Items anchor: item_y = 132 - itemHeight + 2
+  // Render order: neon → lady → equipment
   const parts = [];
 
+  // 1. Neon sign (back — sits inside oval window)
+  if (u.neon) {
+    parts.push(_eqNeonSign(74, 55, 54, 20));
+  }
+  // 2. Lady (mid — peeks above counter in lemon window)
   if ((S.hiredToday || {}).lady) {
     parts.push(_eqLadyServer(74, 132));
   }
-  // Canopy handled externally
-  if (u.neon) {
-    // Overlays the oval window sign text area
-    parts.push(_eqNeonSign(74, 55, 56, 22));
-  }
+  // 3. Equipment (front)
   if (u.soundsystem) {
     parts.push(_eqSpeaker(0,   68));
     parts.push(_eqSpeaker(137, 68));
   }
   if (u.fridge) {
-    parts.push(_eqFridge(0, 122));
+    // Left: base y=132 → fridge top = 132-32 = 100
+    parts.push(_eqFridge(0, 100));
   }
   if (u.juicer || u.powerjuicer) {
-    parts.push(_eqJuicer(10, 134, !!u.powerjuicer));
+    // On counter left (base y=132): juicer h≈20 → y=112
+    parts.push(_eqJuicer(10, 112, !!u.powerjuicer));
   }
   if (u.register) {
-    parts.push(_eqRegister(110, 136));
+    // On counter right (base y=132): register h≈17 → y=115
+    parts.push(_eqRegister(110, 115));
   }
   if (u.dispenser) {
-    parts.push(_eqDispenser(54, 132));
+    // On counter centre-left (base y=132): dispenser h≈22 → y=110
+    parts.push(_eqDispenser(40, 110));
   }
   if (u.icemaker) {
-    parts.push(_eqIcemaker(130, 126));
+    // Right: icemaker h≈28 → y=104
+    parts.push(_eqIcemaker(130, 104));
   } else if (u.iceomatic) {
-    parts.push(_eqIceomatic(131, 130));
+    parts.push(_eqIceomatic(131, 112));
   }
   return parts.join('');
 }
 
 function _extrasCastle(u) {
   // Coordinate space: viewBox="0 0 168 178"
-  // Gate opening x=54–114, y=108–178; counter top y=158
-  // Keep wall y=60–178; battlements top y=48
+  // Gate serving area x=54–114. Counter surface y=158.
+  // Items sit ON gate floor: item_y = 158 - itemHeight + 2
+  // Render order: neon → lady → equipment
   const parts = [];
 
+  // 1. Neon sign (back — overlays purple banner)
+  if (u.neon) {
+    parts.push(_eqNeonSign(84, 68, 82, 24));
+  }
+  // 2. Lady (mid — framed by gate arch)
   if ((S.hiredToday || {}).lady) {
     parts.push(_eqLadyServer(84, 158));
   }
-  // Canopy handled externally
-  if (u.neon) {
-    // Overlays the purple banner (x=42,y=68,w=84,h=24)
-    parts.push(_eqNeonSign(84, 68, 82, 24));
-  }
+  // 3. Equipment (front)
   if (u.soundsystem) {
     parts.push(_eqSpeaker(9,   108));
     parts.push(_eqSpeaker(148, 108));
   }
   if (u.fridge) {
+    // Left tower: base y=158 → fridge top = 158-32 = 126
     parts.push(_eqFridge(3, 126));
   }
   if (u.juicer || u.powerjuicer) {
-    // Inside gate upper area
-    parts.push(_eqJuicer(56, 120, !!u.powerjuicer));
+    // Gate left (base y=158): juicer h≈20 → y=138
+    parts.push(_eqJuicer(56, 138, !!u.powerjuicer));
   }
   if (u.register) {
-    parts.push(_eqRegister(96, 122));
+    // Gate right (base y=158): register h≈17 → y=141
+    parts.push(_eqRegister(94, 141));
   }
   if (u.dispenser) {
-    parts.push(_eqDispenser(70, 118));
+    // Gate centre (base y=158): dispenser h≈22 → y=136
+    parts.push(_eqDispenser(70, 136));
   }
   if (u.icemaker) {
-    parts.push(_eqIcemaker(150, 118));
+    // Right tower: base y=158 → icemaker h≈28 → y=130
+    parts.push(_eqIcemaker(150, 130));
   } else if (u.iceomatic) {
-    parts.push(_eqIceomatic(151, 122));
+    parts.push(_eqIceomatic(151, 138));
   }
   return parts.join('');
 }
@@ -469,44 +494,52 @@ function _extrasCastle(u) {
 // Canopy SVG matching the shop icon — umbrella with arc, stripes, fringe, pole, base.
 // standH = height of the stand SVG (so pole reaches the ground).
 function _buildCanopySVG(standH) {
-  const tier = Math.min(3, S.standTier || 0);
+  const tier   = Math.min(3, S.standTier || 0);
   const clipId = 'cpyOut' + tier;
-  const W = 68;         // SVG width
-  const H = standH;     // SVG height = same as stand so pole reaches ground
-  const cx = 34;        // umbrella horizontal centre
-  const arcY = Math.round(H * 0.36); // arc bottom y
-  const arcH = 26;      // arc rise
-  const aL   = cx - 32; // arc left x  = 2
-  const aR   = cx + 32; // arc right x = 66
+  const W  = 96;                       // wider umbrella
+  const H  = standH;
+  const cx = 48;                       // centre x
+  const arcY = Math.round(H * 0.36);  // arc bottom y
+  const arcH = 30;                     // arc rise (taller for wider span)
+  const aL = 2;                        // arc left x
+  const aR = 94;                       // arc right x
+  // stripe interval: (aR-aL) / 9 ≈ 10px
+  const si = 10;
   return `<svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" xmlns="http://www.w3.org/2000/svg">
   <defs>
     <clipPath id="${clipId}">
       <path d="M${aL},${arcY} Q${cx},${arcY-arcH} ${aR},${arcY} Z"/>
     </clipPath>
   </defs>
-  <!-- Umbrella fabric -->
+  <!-- Umbrella fabric (orange) -->
   <path d="M${aL},${arcY} Q${cx},${arcY-arcH} ${aR},${arcY} Z" fill="#FF8C00"/>
-  <!-- White stripes (clipped to arc) -->
-  <rect x="${aL+1}"  y="${arcY-arcH}" width="5" height="${arcH+2}" fill="#FFF8E1" opacity="0.82" clip-path="url(#${clipId})"/>
-  <rect x="${aL+11}" y="${arcY-arcH}" width="5" height="${arcH+2}" fill="#FFF8E1" opacity="0.82" clip-path="url(#${clipId})"/>
-  <rect x="${aL+21}" y="${arcY-arcH}" width="5" height="${arcH+2}" fill="#FFF8E1" opacity="0.82" clip-path="url(#${clipId})"/>
-  <rect x="${aL+31}" y="${arcY-arcH}" width="5" height="${arcH+2}" fill="#FFF8E1" opacity="0.82" clip-path="url(#${clipId})"/>
-  <rect x="${aL+41}" y="${arcY-arcH}" width="5" height="${arcH+2}" fill="#FFF8E1" opacity="0.82" clip-path="url(#${clipId})"/>
-  <rect x="${aL+51}" y="${arcY-arcH}" width="5" height="${arcH+2}" fill="#FFF8E1" opacity="0.82" clip-path="url(#${clipId})"/>
-  <!-- Fringe scallops -->
-  <ellipse cx="${aL+4}"  cy="${arcY+2}" rx="3" ry="4" fill="#FFD700"/>
-  <ellipse cx="${aL+13}" cy="${arcY+3}" rx="3" ry="4" fill="#FFD700"/>
-  <ellipse cx="${aL+22}" cy="${arcY+3}" rx="3" ry="4" fill="#FFD700"/>
-  <ellipse cx="${aL+31}" cy="${arcY+3}" rx="3" ry="4" fill="#FFD700"/>
-  <ellipse cx="${aL+40}" cy="${arcY+3}" rx="3" ry="4" fill="#FFD700"/>
-  <ellipse cx="${aL+49}" cy="${arcY+3}" rx="3" ry="4" fill="#FFD700"/>
-  <ellipse cx="${aL+60}" cy="${arcY+2}" rx="3" ry="4" fill="#FFD700"/>
-  <!-- Finial spike at arc peak -->
-  <polygon points="${cx},${arcY-arcH-3} ${cx-4},${arcY-arcH+8} ${cx+4},${arcY-arcH+8}" fill="#FFD700"/>
+  <!-- White stripes clipped to arc (9 stripes) -->
+  <rect x="${aL+1}"    y="${arcY-arcH}" width="5" height="${arcH+2}" fill="#FFF8E1" opacity="0.82" clip-path="url(#${clipId})"/>
+  <rect x="${aL+si}"   y="${arcY-arcH}" width="5" height="${arcH+2}" fill="#FFF8E1" opacity="0.82" clip-path="url(#${clipId})"/>
+  <rect x="${aL+si*2}" y="${arcY-arcH}" width="5" height="${arcH+2}" fill="#FFF8E1" opacity="0.82" clip-path="url(#${clipId})"/>
+  <rect x="${aL+si*3}" y="${arcY-arcH}" width="5" height="${arcH+2}" fill="#FFF8E1" opacity="0.82" clip-path="url(#${clipId})"/>
+  <rect x="${aL+si*4}" y="${arcY-arcH}" width="5" height="${arcH+2}" fill="#FFF8E1" opacity="0.82" clip-path="url(#${clipId})"/>
+  <rect x="${aL+si*5}" y="${arcY-arcH}" width="5" height="${arcH+2}" fill="#FFF8E1" opacity="0.82" clip-path="url(#${clipId})"/>
+  <rect x="${aL+si*6}" y="${arcY-arcH}" width="5" height="${arcH+2}" fill="#FFF8E1" opacity="0.82" clip-path="url(#${clipId})"/>
+  <rect x="${aL+si*7}" y="${arcY-arcH}" width="5" height="${arcH+2}" fill="#FFF8E1" opacity="0.82" clip-path="url(#${clipId})"/>
+  <rect x="${aL+si*8}" y="${arcY-arcH}" width="5" height="${arcH+2}" fill="#FFF8E1" opacity="0.82" clip-path="url(#${clipId})"/>
+  <!-- Fringe scallops (10 drops) -->
+  <ellipse cx="${aL+4}"    cy="${arcY+2}" rx="3.5" ry="4.5" fill="#FFD700"/>
+  <ellipse cx="${aL+13}"   cy="${arcY+3}" rx="3.5" ry="4.5" fill="#FFD700"/>
+  <ellipse cx="${aL+22}"   cy="${arcY+3}" rx="3.5" ry="4.5" fill="#FFD700"/>
+  <ellipse cx="${aL+31}"   cy="${arcY+3}" rx="3.5" ry="4.5" fill="#FFD700"/>
+  <ellipse cx="${aL+40}"   cy="${arcY+3}" rx="3.5" ry="4.5" fill="#FFD700"/>
+  <ellipse cx="${aL+49}"   cy="${arcY+3}" rx="3.5" ry="4.5" fill="#FFD700"/>
+  <ellipse cx="${aL+58}"   cy="${arcY+3}" rx="3.5" ry="4.5" fill="#FFD700"/>
+  <ellipse cx="${aL+67}"   cy="${arcY+3}" rx="3.5" ry="4.5" fill="#FFD700"/>
+  <ellipse cx="${aL+78}"   cy="${arcY+3}" rx="3.5" ry="4.5" fill="#FFD700"/>
+  <ellipse cx="${aL+88}"   cy="${arcY+2}" rx="3.5" ry="4.5" fill="#FFD700"/>
+  <!-- Finial spike at peak -->
+  <polygon points="${cx},${arcY-arcH-3} ${cx-4},${arcY-arcH+9} ${cx+4},${arcY-arcH+9}" fill="#FFD700"/>
   <!-- Centre pole -->
-  <rect x="${cx-2.5}" y="${arcY+2}" width="5" height="${H-arcY-8}" rx="2" fill="#6D4C41"/>
+  <rect x="${cx-2.5}" y="${arcY+3}" width="5" height="${H-arcY-11}" rx="2" fill="#6D4C41"/>
   <!-- Base plate -->
-  <rect x="${cx-9}" y="${H-8}" width="18" height="8" rx="2" fill="#5D4037"/>
+  <rect x="${cx-10}" y="${H-9}" width="20" height="9" rx="2" fill="#5D4037"/>
 </svg>`;
 }
 
