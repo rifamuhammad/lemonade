@@ -187,7 +187,7 @@ let S = {};
 
 function defaultState() {
   return {
-    coins: 40,
+    coins: 1000000,
     day: 1,
     reputation: 50,
     inventory: { lemons: 0, sugar: 0, cups: 0, ice: 0 },

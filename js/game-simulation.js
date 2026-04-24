@@ -157,12 +157,166 @@ function _eqCanopyPanel(x, y, w) {
     <rect x="${x}" y="${y}" width="${w}" height="11" rx="4" fill="none" stroke="#E65100" stroke-width="0.8" opacity="0.55"/>`;
 }
 
+// ── Lady server SVG (drawn inside stand, behind counter) ─────────────────────
+// cx = horizontal centre, counterY = y where counter top starts.
+// Only upper body is drawn — lower body is "hidden" behind the counter.
+function _eqLadyServer(cx, counterY) {
+  const hy = counterY - 30; // head centre
+  return `
+    <!-- Apron / upper body (just above counter) -->
+    <rect x="${cx-14}" y="${counterY-16}" width="28" height="20" rx="3" fill="#FF8C00"/>
+    <rect x="${cx-8}"  y="${counterY-14}" width="16" height="13" rx="2" fill="white" opacity="0.75"/>
+    <!-- Neck -->
+    <rect x="${cx-4}" y="${hy+11}" width="8" height="10" rx="3" fill="#F4C89A"/>
+    <!-- Head -->
+    <ellipse cx="${cx}" cy="${hy}" rx="13" ry="13" fill="#F4C89A"/>
+    <!-- Hair bun -->
+    <ellipse cx="${cx}" cy="${hy-9}" rx="14" ry="7" fill="#5D4037"/>
+    <circle  cx="${cx+10}" cy="${hy-6}" r="6" fill="#5D4037"/>
+    <!-- Chef hat body -->
+    <rect x="${cx-11}" y="${hy-24}" width="22" height="11" rx="2" fill="white" stroke="#E0E0E0" stroke-width="0.8"/>
+    <!-- Chef hat top puff -->
+    <ellipse cx="${cx}" cy="${hy-24}" rx="13" ry="6" fill="white" stroke="#E0E0E0" stroke-width="0.8"/>
+    <!-- Hat band -->
+    <rect x="${cx-11}" y="${hy-15}" width="22" height="3" rx="1" fill="#BDBDBD" opacity="0.55"/>
+    <!-- Eyes (bright, friendly) -->
+    <ellipse cx="${cx-5}" cy="${hy-1}" rx="2.2" ry="2.8" fill="white"/>
+    <ellipse cx="${cx+5}" cy="${hy-1}" rx="2.2" ry="2.8" fill="white"/>
+    <circle  cx="${cx-5}" cy="${hy-1}" r="1.6" fill="#2E4057"/>
+    <circle  cx="${cx+5}" cy="${hy-1}" r="1.6" fill="#2E4057"/>
+    <circle  cx="${cx-4.3}" cy="${hy-1.8}" r="0.6" fill="white"/>
+    <circle  cx="${cx+5.7}" cy="${hy-1.8}" r="0.6" fill="white"/>
+    <!-- Lashes (upper arc lines) -->
+    <path d="M${cx-7},${hy-3.5} Q${cx-5},${hy-6} ${cx-3},${hy-3.5}" fill="none" stroke="#4E342E" stroke-width="1.1" stroke-linecap="round"/>
+    <path d="M${cx+3},${hy-3.5} Q${cx+5},${hy-6} ${cx+7},${hy-3.5}" fill="none" stroke="#4E342E" stroke-width="1.1" stroke-linecap="round"/>
+    <!-- Smile -->
+    <path d="M${cx-5},${hy+5.5} Q${cx},${hy+10} ${cx+5},${hy+5.5}" fill="none" stroke="#D32F2F" stroke-width="1.6" stroke-linecap="round"/>
+    <!-- Rosy cheeks -->
+    <ellipse cx="${cx-9}" cy="${hy+3}" rx="4.5" ry="3.5" fill="#FFCDD2" opacity="0.6"/>
+    <ellipse cx="${cx+9}" cy="${hy+3}" rx="4.5" ry="3.5" fill="#FFCDD2" opacity="0.6"/>
+    <!-- Hands resting on counter -->
+    <ellipse cx="${cx-19}" cy="${counterY+1}" rx="6" ry="4" fill="#F4C89A"/>
+    <ellipse cx="${cx+19}" cy="${counterY+1}" rx="6" ry="4" fill="#F4C89A"/>`;
+}
+
+// ── External staff: full-body illustrated SVGs ────────────────────────────────
+function _svgClown() {
+  return `<svg viewBox="0 0 54 84" width="50" height="78" xmlns="http://www.w3.org/2000/svg" style="overflow:visible;display:block">
+    <!-- Oversized shoes -->
+    <ellipse cx="17" cy="80" rx="14" ry="5" fill="#FF5722"/>
+    <ellipse cx="37" cy="80" rx="14" ry="5" fill="#FF5722"/>
+    <!-- Legs -->
+    <rect x="12" y="60" width="11" height="20" rx="5" fill="#E91E63"/>
+    <rect x="31" y="60" width="11" height="20" rx="5" fill="#3F51B5"/>
+    <!-- Suit body -->
+    <rect x="9" y="34" width="36" height="30" rx="6" fill="#E91E63"/>
+    <!-- Diamond suit pattern -->
+    <polygon points="27,34 35,47 27,60 19,47" fill="#FFD700" opacity="0.88"/>
+    <!-- Bow tie -->
+    <polygon points="15,41 24,47 15,53" fill="#4CAF50"/>
+    <polygon points="39,41 30,47 39,53" fill="#4CAF50"/>
+    <circle cx="27" cy="47" r="3.5" fill="#FFEB3B"/>
+    <!-- Left arm waving up -->
+    <rect x="-2" y="36" width="13" height="7" rx="3.5" fill="#FFD700" transform="rotate(-35,5,39)"/>
+    <ellipse cx="0"  cy="33" rx="5" ry="4.5" fill="#FDBCB4" transform="rotate(-35,5,39)"/>
+    <!-- Right arm waving up -->
+    <rect x="43" y="36" width="13" height="7" rx="3.5" fill="#3F51B5" transform="rotate(35,49,39)"/>
+    <ellipse cx="54" cy="33" rx="5" ry="4.5" fill="#FDBCB4" transform="rotate(35,49,39)"/>
+    <!-- Neck -->
+    <rect x="24" y="27" width="6" height="9" rx="3" fill="#FDBCB4"/>
+    <!-- Head -->
+    <ellipse cx="27" cy="19" rx="14" ry="14" fill="#FDBCB4"/>
+    <!-- Curly colourful hair (left, top, right) -->
+    <ellipse cx="13" cy="14" rx="7" ry="9" fill="#E91E63"/>
+    <ellipse cx="27" cy="7"  rx="8" ry="7" fill="#FFEB3B"/>
+    <ellipse cx="41" cy="14" rx="7" ry="9" fill="#4CAF50"/>
+    <!-- Pointy hat -->
+    <polygon points="27,0 19,14 35,14" fill="#7B1FA2"/>
+    <ellipse cx="27" cy="14" rx="9" ry="3.5" fill="#9C27B0"/>
+    <!-- Star on hat -->
+    <polygon points="27,3 28.5,7 32,7 29.5,9.5 30.5,13 27,11 23.5,13 24.5,9.5 22,7 25.5,7" fill="#FFD700" opacity="0.9"/>
+    <!-- Eyes (big circles) -->
+    <circle cx="22" cy="19" r="3.5" fill="white"/>
+    <circle cx="32" cy="19" r="3.5" fill="white"/>
+    <circle cx="22" cy="19" r="2"   fill="#1565C0"/>
+    <circle cx="32" cy="19" r="2"   fill="#1565C0"/>
+    <circle cx="22.8" cy="18.2" r="0.7" fill="white"/>
+    <circle cx="32.8" cy="18.2" r="0.7" fill="white"/>
+    <!-- Red round nose -->
+    <circle cx="27" cy="24" r="4.5" fill="#F44336"/>
+    <circle cx="25.5" cy="23" r="1.5" fill="#EF9A9A" opacity="0.6"/>
+    <!-- Big smile -->
+    <path d="M19,29 Q27,37 35,29" fill="none" stroke="#B71C1C" stroke-width="2" stroke-linecap="round"/>
+  </svg>`;
+}
+
+function _svgMusician() {
+  return `<svg viewBox="0 0 58 84" width="52" height="76" xmlns="http://www.w3.org/2000/svg" style="overflow:visible;display:block">
+    <!-- Shoes -->
+    <ellipse cx="19" cy="80" rx="10" ry="5" fill="#212121"/>
+    <ellipse cx="36" cy="80" rx="10" ry="5" fill="#212121"/>
+    <!-- Legs (dark jeans) -->
+    <rect x="14" y="58" width="11" height="23" rx="5" fill="#1A237E"/>
+    <rect x="33" y="58" width="11" height="23" rx="5" fill="#1A237E"/>
+    <!-- Body — dark jacket -->
+    <rect x="11" y="31" width="36" height="31" rx="5" fill="#37474F"/>
+    <!-- Shirt / collar accent -->
+    <rect x="23" y="31" width="12" height="10" rx="2" fill="#ECEFF1" opacity="0.6"/>
+    <!-- Orange tie -->
+    <polygon points="29,31 26,38 29,37 32,38" fill="#F57C00"/>
+    <!-- Guitar body (left, held low) -->
+    <ellipse cx="13" cy="54" rx="10" ry="13" fill="#8D6E63"/>
+    <ellipse cx="13" cy="54" rx="10" ry="13" fill="none" stroke="#6D4C41" stroke-width="1.2"/>
+    <circle  cx="13" cy="54" r="4" fill="#5D4037"/>
+    <circle  cx="13" cy="54" r="2" fill="none" stroke="#4E342E" stroke-width="0.8"/>
+    <!-- Guitar neck -->
+    <rect x="10" y="27" width="6" height="30" rx="3" fill="#A1887F"/>
+    <!-- Guitar strings -->
+    <line x1="12" y1="29" x2="12" y2="56" stroke="#E0E0E0" stroke-width="0.7" opacity="0.85"/>
+    <line x1="14" y1="29" x2="14" y2="56" stroke="#E0E0E0" stroke-width="0.7" opacity="0.85"/>
+    <line x1="16" y1="29" x2="16" y2="56" stroke="#E0E0E0" stroke-width="0.7" opacity="0.85"/>
+    <!-- Tuning pegs -->
+    <circle cx="9"  cy="29" r="2" fill="#6D4C41"/>
+    <circle cx="9"  cy="34" r="2" fill="#6D4C41"/>
+    <circle cx="18" cy="29" r="2" fill="#6D4C41"/>
+    <circle cx="18" cy="34" r="2" fill="#6D4C41"/>
+    <!-- Left arm on guitar neck -->
+    <rect x="3" y="34" width="10" height="6" rx="3" fill="#37474F"/>
+    <ellipse cx="3" cy="37" rx="4.5" ry="3.5" fill="#FDBCB4"/>
+    <!-- Right arm strumming -->
+    <rect x="47" y="42" width="13" height="6" rx="3" fill="#37474F" transform="rotate(20,47,45)"/>
+    <ellipse cx="57" cy="47" rx="4.5" ry="3.5" fill="#FDBCB4" transform="rotate(20,47,45)"/>
+    <!-- Head -->
+    <ellipse cx="29" cy="17" rx="13" ry="13" fill="#FDBCB4"/>
+    <!-- Hair — casual side sweep -->
+    <ellipse cx="29" cy="8" rx="14" ry="7" fill="#212121"/>
+    <path d="M16,14 Q22,7 35,8 Q42,13 44,18" fill="#212121"/>
+    <!-- Eyes -->
+    <ellipse cx="25" cy="17" rx="2.2" ry="2.8" fill="white"/>
+    <ellipse cx="33" cy="17" rx="2.2" ry="2.8" fill="white"/>
+    <circle  cx="25" cy="17" r="1.5" fill="#1A237E"/>
+    <circle  cx="33" cy="17" r="1.5" fill="#1A237E"/>
+    <circle  cx="25.7" cy="16.2" r="0.6" fill="white"/>
+    <circle  cx="33.7" cy="16.2" r="0.6" fill="white"/>
+    <!-- Smile -->
+    <path d="M24,22 Q29,27 34,22" fill="none" stroke="#C62828" stroke-width="1.5" stroke-linecap="round"/>
+    <!-- Floating music notes -->
+    <text x="41" y="26" font-size="13" fill="#FFD700" opacity="0.92" font-family="sans-serif">♪</text>
+    <text x="46" y="14" font-size="10" fill="#FF8C00" opacity="0.78" font-family="sans-serif">♫</text>
+  </svg>`;
+}
+
 // ── Per-tier extras (correct coordinate space for each stand SVG) ─────────────
 
 function _extrasDefault(u) {
   // Coordinate space: viewBox="0 0 138 158"
   // Counter area: y=104–158; sign: y=84–104; awning arc bottom: y=38
   const parts = [];
+
+  // Lady server — rendered FIRST so equipment appears in front of her
+  if ((S.hiredToday || {}).lady) {
+    parts.push(_eqLadyServer(69, 104));
+  }
 
   if (u.canopy) {
     // LEFT-SIDE shade for customer queue:
@@ -219,6 +373,11 @@ function _extrasClassic(u) {
   // Roof peak y=10, gutter y=64, stand body y=67–168, counter top y=113
   const parts = [];
 
+  // Lady server in the central serving window area
+  if ((S.hiredToday || {}).lady) {
+    parts.push(_eqLadyServer(80, 113));
+  }
+
   if (u.canopy) {
     // LEFT-SIDE queue shade: arm from left edge along gutter, fabric hangs down
     parts.push(`
@@ -273,6 +432,11 @@ function _extrasLemon(u) {
   // Counter: y=132–168
   const parts = [];
 
+  // Lady server — peeks through the lemon's serving window area
+  if ((S.hiredToday || {}).lady) {
+    parts.push(_eqLadyServer(74, 132));
+  }
+
   if (u.canopy) {
     // LEFT-SIDE shade: arm from lemon body left side (x≈10, y=76),
     // fabric hangs down the left to protect the queue
@@ -326,6 +490,11 @@ function _extrasCastle(u) {
   // Left tower: x=0–36; Keep: x=34–134; Right tower: x=132–168
   // Battlements top y=32 (towers), keep top y=48; counter top y=158
   const parts = [];
+
+  // Lady server — framed by the castle gate arch
+  if ((S.hiredToday || {}).lady) {
+    parts.push(_eqLadyServer(84, 158));
+  }
 
   if (u.canopy) {
     // LEFT-SIDE shade extending from the left tower outward:
@@ -819,23 +988,30 @@ function setupScene() {
   buildStaffOverlay();
 }
 
-// Render hired staff as visible characters beside the stand
+// Render hired staff as visible characters beside the stand.
+// Lady is drawn INSIDE the stand SVG via _eqLadyServer() in the extras functions.
+// Clown and Musician appear as illustrated SVG figures in the scene.
 function buildStaffOverlay() {
   const el = document.getElementById('scene-staff');
   if (!el) return;
   const hired = S.hiredToday || {};
-  const STAFF_DISPLAY = [
-    { id:'lady',     emoji:'👩‍🍳', name:'Lady'     },
-    { id:'clown',    emoji:'🤡',   name:'Clown'    },
-    { id:'musician', emoji:'🎸',   name:'Musician' },
-  ];
-  el.innerHTML = STAFF_DISPLAY
-    .filter(s => hired[s.id])
-    .map(s => `<div class="scene-staff-member">
-      <span class="staff-emoji">${s.emoji}</span>
-      <span class="staff-name">${s.name}</span>
-    </div>`)
-    .join('');
+  const members = [];
+
+  if (hired.clown) {
+    members.push(`<div class="scene-staff-member staff-clown">
+      ${_svgClown()}
+      <span class="staff-name">Party Clown</span>
+    </div>`);
+  }
+  if (hired.musician) {
+    members.push(`<div class="scene-staff-member staff-musician">
+      ${_svgMusician()}
+      <span class="staff-name">Musician</span>
+    </div>`);
+  }
+  // Lady handled inside stand SVG — nothing to render here for her
+
+  el.innerHTML = members.join('');
 }
 
 // Called when rendering day screen

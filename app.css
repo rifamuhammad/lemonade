@@ -722,11 +722,12 @@ input[type="range"]::-moz-range-thumb {
 #scene-staff {
   position: absolute;
   bottom: 44px;
-  right: 148px; /* just left of the stand */
+  right: 154px; /* just left of the stand */
   z-index: 9;
   display: flex;
   flex-direction: row-reverse;
-  gap: 4px;
+  align-items: flex-end;
+  gap: 6px;
   pointer-events: none;
 }
 .scene-staff-member {
@@ -734,10 +735,29 @@ input[type="range"]::-moz-range-thumb {
   flex-direction: column;
   align-items: center;
   animation: staffBob 1.8s ease-in-out infinite alternate;
+  filter: drop-shadow(0 3px 4px rgba(0,0,0,0.22));
 }
-.scene-staff-member .staff-emoji { font-size: 2rem; line-height: 1; }
-.scene-staff-member .staff-name  { font-size: 0.55rem; color: var(--navy); background: rgba(255,255,255,0.75); border-radius: 4px; padding: 1px 3px; margin-top: 1px; }
-@keyframes staffBob { from { transform: translateY(0); } to { transform: translateY(-4px); } }
+/* Clown bobs a little faster and higher */
+.scene-staff-member.staff-clown {
+  animation: staffBobBig 1.4s ease-in-out infinite alternate;
+}
+/* Musician sways slightly */
+.scene-staff-member.staff-musician {
+  animation: staffSway 2.2s ease-in-out infinite alternate;
+}
+.scene-staff-member .staff-name {
+  font-size: 0.52rem;
+  color: var(--navy);
+  background: rgba(255,255,255,0.82);
+  border-radius: 4px;
+  padding: 1px 4px;
+  margin-top: 2px;
+  font-family: var(--font);
+  white-space: nowrap;
+}
+@keyframes staffBob    { from { transform: translateY(0); }    to { transform: translateY(-5px); } }
+@keyframes staffBobBig { from { transform: translateY(0) rotate(-2deg); } to { transform: translateY(-7px) rotate(2deg); } }
+@keyframes staffSway   { from { transform: rotate(-3deg); } to { transform: rotate(3deg); } }
 
 /* Customer layer */
 #scene-customers {
