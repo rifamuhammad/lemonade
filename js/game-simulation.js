@@ -201,7 +201,7 @@ function _eqLadyServer(cx, counterY) {
 
 // ── External staff: full-body illustrated SVGs ────────────────────────────────
 function _svgClown() {
-  return `<svg viewBox="0 0 54 84" width="50" height="78" xmlns="http://www.w3.org/2000/svg" style="overflow:visible;display:block">
+  return `<svg viewBox="0 0 54 84" width="38" height="60" xmlns="http://www.w3.org/2000/svg" style="overflow:visible;display:block">
     <!-- Oversized shoes -->
     <ellipse cx="17" cy="80" rx="14" ry="5" fill="#FF5722"/>
     <ellipse cx="37" cy="80" rx="14" ry="5" fill="#FF5722"/>
@@ -251,7 +251,7 @@ function _svgClown() {
 }
 
 function _svgMusician() {
-  return `<svg viewBox="0 0 58 84" width="52" height="76" xmlns="http://www.w3.org/2000/svg" style="overflow:visible;display:block">
+  return `<svg viewBox="0 0 58 84" width="40" height="58" xmlns="http://www.w3.org/2000/svg" style="overflow:visible;display:block">
     <!-- Shoes -->
     <ellipse cx="19" cy="80" rx="10" ry="5" fill="#212121"/>
     <ellipse cx="36" cy="80" rx="10" ry="5" fill="#212121"/>
