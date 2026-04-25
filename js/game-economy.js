@@ -1,15 +1,36 @@
 ﻿'use strict';
 
+// ── Seasonal utilities ───────────────────────────────────────────────────────
+function getSeason(day) {
+  const d = ((day - 1) % 60) + 1;
+  if (d <= 15) return 'spring';
+  if (d <= 30) return 'summer';
+  if (d <= 45) return 'fall';
+  return 'winter';
+}
+function getYear(day) { return Math.floor((day - 1) / 60) + 1; }
+function getSeasonDay(day) { return ((day - 1) % 15) + 1; }
+
+function _pickWeatherForSeason(seasonKey, forceNoHeatwave) {
+  const wmap = SEASONS[seasonKey].weatherWeights;
+  const keys = Object.keys(wmap);
+  let r = Math.random();
+  let cum = 0;
+  for (const k of keys) {
+    cum += wmap[k];
+    if (r < cum) return k;
+  }
+  return keys[0];
+}
+
+function pickWeatherForDay(day) {
+  const season = getSeason(day);
+  return _pickWeatherForSeason(season, false);
+}
+
 function pickWeather() {
   if (S.activeEvent && S.activeEvent.id === 'heatwave') return 'hot';
-  const weights = [30, 25, 15, 20, 10];
-  const total = weights.reduce((a, b) => a + b, 0);
-  let r = Math.random() * total;
-  for (let i = 0; i < WEATHER.length; i++) {
-    r -= weights[i];
-    if (r <= 0) return WEATHER[i].id;
-  }
-  return 'sunny';
+  return _pickWeatherForSeason(getSeason(S.day), false);
 }
 
 function clampValue(n, min, max) {
@@ -83,6 +104,17 @@ function refreshMarketPrices() {
   const eventId = S.activeEvent ? S.activeEvent.id : null;
   const shock = pickMarketShock();
   const signals = buildMarketSignals(S.currentWeather, eventId, shock);
+
+  // Seasonal market signals (applied as mild background pressure)
+  const seasonSigs = SEASONS[getSeason(S.day)].marketSignals;
+  Object.entries(seasonSigs).forEach(([ingredient, impact]) => {
+    signals.push({ ingredient, impact: impact * 0.5, source: 'season', reason: `${SEASONS[getSeason(S.day)].label} seasonal pricing.` });
+  });
+
+  // New seasonal event market effects
+  if (eventId && MARKET_SEASON_EVENT_EFFECTS[eventId]) {
+    MARKET_SEASON_EVENT_EFFECTS[eventId].forEach(sig => signals.push({ ...sig, source: 'event' }));
+  }
   const nextPrices = {};
 
   Object.keys(INGREDIENT_BASE).forEach(key => {
@@ -240,6 +272,31 @@ function calcTasteScore(recipe) {
   if (S.upgrades.canopy && recipe.icePerCup > 0) score = Math.min(1, score + 0.05);
   if (S.upgrades.canopy && S.currentLocation === 'beach' && recipe.icePerCup >= 2) score = Math.min(1, score + 0.03);
 
+  // Special ingredient bonuses
+  const currentSeason = getSeason(S.day);
+  const ri = S.researchedIngredients || {};
+  let comboPartnerUsed = {};
+  Object.entries(SPECIAL_INGREDIENTS).forEach(([id, ing]) => {
+    const perCup = (recipe[id + 'PerCup'] || 0);
+    const tier   = ri[id] || 0;
+    if (perCup >= 1 && tier >= 1) {
+      let bonus = ing.tasteBonus;
+      if (ing.bestSeason === currentSeason) bonus *= 1.30;
+      if (ing.bestWeather.includes(S.currentWeather)) bonus *= 1.20;
+      if (tier >= 2) bonus *= 1.15;
+      score = Math.min(1, score + bonus);
+      comboPartnerUsed[id] = true;
+    }
+  });
+
+  // Artisan combo (tier 3): both partners ≥1 per cup
+  Object.entries(SPECIAL_INGREDIENTS).forEach(([id, ing]) => {
+    if ((ri[id] || 0) >= 3 && comboPartnerUsed[id] && comboPartnerUsed[ing.comboWith]) {
+      score = Math.min(1, score + ing.comboBonus);
+      if (S.artisanComboUsed === false) S.artisanComboUsed = true;
+    }
+  });
+
   return score;
 }
 
@@ -271,7 +328,16 @@ function calcDemand(recipe, price, tasteScore) {
   baseCust += getAdEffects().custBonus;
   baseCust += tradeoff.demandFlat;
 
+  // Customer personality modifier
+  const ctype = CUSTOMER_TYPES[S.customerPersonality || 'regular'];
+  baseCust = Math.round(baseCust * (ctype ? ctype.demandMult : 1));
+
   let priceSensitivity = Math.max(0.04, 1 - ((price - 0.50) / 9.5) * 0.95);
+  // Personality shifts price threshold tolerance
+  if (ctype && ctype.priceThresholdMult !== 1) {
+    const threshShift = (ctype.priceThresholdMult - 1) * 0.15;
+    priceSensitivity = clampValue(priceSensitivity + threshShift, 0.04, 1.30);
+  }
   priceSensitivity = clampValue(priceSensitivity + tradeoff.priceSensitivityShift, 0.05, 1.25);
 
   const locRep = (S.locationRep && S.locationRep[S.currentLocation] !== undefined)
@@ -280,6 +346,15 @@ function calcDemand(recipe, price, tasteScore) {
   const repBonus = 1 + (locRep / 260);
   const tasteBonus = tasteLabel(tasteScore).mult;
   const weatherMult = w ? w.mult : 1.0;
+
+  // Seasonal event customer bonuses
+  if (S.activeEvent) {
+    if (S.activeEvent.id === 'cherryblossom' && S.currentLocation === 'park') baseCust += 25;
+    if (S.activeEvent.id === 'beachvolleyball' && S.currentLocation === 'beach') baseCust += 30;
+    if (S.activeEvent.id === 'harvestfair' && S.currentLocation === 'market') baseCust += 20;
+    if (S.activeEvent.id === 'wintermarket' && (S.currentLocation === 'sidewalk' || S.currentLocation === 'park')) baseCust += 20;
+  }
+
   const raw = baseCust * weatherMult * priceSensitivity * repBonus * tasteBonus * tradeoff.demandMult * 0.92;
 
   return Math.max(0, Math.round(raw * eff.autoDispenser));
@@ -289,12 +364,21 @@ function calcIngredientCost(recipe, cups) {
   const c = (cups !== undefined) ? cups : recipe.cupsToMake;
   const eff = upgradeEffects();
   const p = S.marketPrices;
-  const raw = c * (
+  let raw = c * (
     recipe.lemonsPerCup * eff.lemonMult * p.lemons +
     recipe.sugarPerCup * p.sugar +
     recipe.icePerCup * eff.iceMult * p.ice +
     p.cups
   );
+  // Special ingredient costs
+  const ri = S.researchedIngredients || {};
+  Object.entries(SPECIAL_INGREDIENTS).forEach(([id, ing]) => {
+    const perCup = recipe[id + 'PerCup'] || 0;
+    if (perCup > 0) {
+      const discount = (ri[id] || 0) >= 2 ? 0.85 : 1.0;
+      raw += c * perCup * ing.marketPrice * discount;
+    }
+  });
   return roundMoney(raw);
 }
 
@@ -359,9 +443,24 @@ function applyDayResults(result) {
   S.locationHistory.push(S.currentLocation);
   if (S.locationHistory.length > 7) S.locationHistory.shift();
 
+  // Deduct special ingredient inventory
+  if (!S.specialInventory) S.specialInventory = { mint:0, strawberry:0, applecinnamon:0, honey:0 };
+  Object.keys(SPECIAL_INGREDIENTS).forEach(id => {
+    const perCup = recipe[id + 'PerCup'] || 0;
+    if (perCup > 0) {
+      S.specialInventory[id] = Math.max(0, roundMoney(S.specialInventory[id] - served * perCup));
+    }
+  });
+
   if (result.cupsSold >= recipe.cupsToMake) S.soldOutCount++;
   if (result.tasteScore >= 0.95) S.consecutiveLegendary++;
   else S.consecutiveLegendary = 0;
+
+  // Track seasonal profit for achievement
+  if (result.profit > 0) {
+    if (!S.seasonsProfit) S.seasonsProfit = { spring:false, summer:false, fall:false, winter:false };
+    S.seasonsProfit[getSeason(S.day)] = true;
+  }
 
   S.franchiseIncome = bonus;
   S.dayResult = result;
@@ -370,12 +469,25 @@ function applyDayResults(result) {
 }
 
 function advanceDay() {
+  const prevDay    = S.day;
+  const prevSeason = getSeason(prevDay);
+  const prevYear   = getYear(prevDay);
+
   S.day++;
   S.phase = 'day';
   S.marketSpentToday = 0;
   S.hiredToday = {};
   S.adsToday = {};
+  S.artisanComboUsed = false;
 
+  const newSeason = getSeason(S.day);
+  const newYear   = getYear(S.day);
+
+  // Update season + year cache
+  S.season = newSeason;
+  S.year   = newYear;
+
+  // Ice melt overnight
   const eff = upgradeEffects();
   if (eff.iceFridge) {
     S.iceMeltedYesterday = 0;
@@ -388,6 +500,7 @@ function advanceDay() {
     S.iceMeltedYesterday = Math.max(0, S.iceMeltedYesterday - eff.iceAutoRestore);
   }
 
+  // Event lifecycle
   if (S.activeEvent) {
     S.activeEventDays--;
     if (S.activeEventDays <= 0) {
@@ -405,11 +518,39 @@ function advanceDay() {
     }
   }
 
-  if (!S.activeEvent && !S.pendingEvent && Math.random() < 0.10) {
-    S.pendingEvent = EVENTS[Math.floor(Math.random() * EVENTS.length)];
+  // Pick event from seasonal pool (10% chance)
+  if (!S.activeEvent && !S.pendingEvent && Math.random() < 0.12) {
+    const seasonEvents = SEASONS[newSeason].eventIds
+      .map(id => EVENTS.find(e => e.id === id))
+      .filter(Boolean);
+    if (seasonEvents.length) {
+      S.pendingEvent = seasonEvents[Math.floor(Math.random() * seasonEvents.length)];
+    }
+  }
+
+  // Customer personality: season-driven, high rep nudges toward 'regular'
+  S.customerPersonality = SEASONS[newSeason].customerType;
+  if ((S.reputation || 0) > 75 && Math.random() < 0.3) S.customerPersonality = 'regular';
+
+  // Season transition announcement
+  if (newSeason !== prevSeason) {
+    setTimeout(() => showSeasonToast(newSeason, newYear), 600);
+  }
+
+  // Year tick
+  if (newYear > prevYear) {
+    setTimeout(() => showAchievementToast({ name: `Year ${newYear} begins!`, emoji: '📆', desc: 'Your lemonade empire grows stronger.' }), 2000);
   }
 
   S.currentWeather = pickWeather();
+
+  // 3-day weather forecast
+  S.weatherForecast = [
+    pickWeatherForDay(S.day + 1),
+    pickWeatherForDay(S.day + 2),
+    pickWeatherForDay(S.day + 3),
+  ];
+
   refreshMarketPrices();
   saveState();
 }
@@ -438,6 +579,9 @@ function checkAchievements(result) {
     { id: 'empire_builder', cond: (S.standTier || 0) >= 3 },
     { id: 'grossophobe', cond: result.cupsSold >= 5 && (rx.gross || 0) === 0 },
     { id: 'reputation_max', cond: S.reputation >= 95 },
+    { id: 'season_master', cond: S.seasonsProfit && Object.values(S.seasonsProfit).every(Boolean) },
+    { id: 'artisan', cond: S.artisanComboUsed && result.tasteScore >= 0.85 },
+    { id: 'year_two', cond: S.day >= 60 },
   ];
 
   checks.forEach(({ id, cond }) => {

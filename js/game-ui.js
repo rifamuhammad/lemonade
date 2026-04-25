@@ -45,6 +45,19 @@ function showAchievementToast(a) {
   _achievementTimeout = setTimeout(() => el.classList.remove('toast-show'), 3500);
 }
 
+function showSeasonToast(season, year) {
+  const sInfo = SEASONS[season];
+  const el = document.getElementById('achievement-toast');
+  el.textContent = `${sInfo.label} has arrived! — Year ${year}`;
+  el.style.background = sInfo.color;
+  el.classList.add('toast-show');
+  clearTimeout(_achievementTimeout);
+  _achievementTimeout = setTimeout(() => {
+    el.classList.remove('toast-show');
+    el.style.background = '';
+  }, 3500);
+}
+
 let _errorTimeout = null;
 function showErrorToast(msg, dur) {
   const el = document.getElementById('error-toast');
@@ -193,7 +206,56 @@ function renderDay() {
 }
 
 function renderDayHud() {
-  // Weather pill — animate slide-in each time day screen opens
+  // ── Season banner ────────────────────────────────────────────────────────
+  const currentSeason = getSeason(S.day);
+  const sInfo = SEASONS[currentSeason];
+  const seasonDay = getSeasonDay(S.day);
+  const yearNum   = getYear(S.day);
+  let banner = document.getElementById('day-season-banner');
+  if (!banner) {
+    banner = document.createElement('div');
+    banner.id = 'day-season-banner';
+    const hud = document.getElementById('day-hud');
+    hud.insertBefore(banner, hud.firstChild);
+  }
+  banner.innerHTML = `<span class="season-label" style="color:${sInfo.color}">${sInfo.label}</span>
+    <span class="season-day-txt">Day ${seasonDay}/15</span>
+    <span class="year-badge" style="background:${sInfo.color}">Year ${yearNum}</span>`;
+  banner.style.borderColor = sInfo.borderColor;
+  banner.style.background  = sInfo.bgAccent;
+
+  // ── 3-day weather forecast ───────────────────────────────────────────────
+  let fcRow = document.getElementById('day-forecast-row');
+  if (!fcRow) {
+    fcRow = document.createElement('div');
+    fcRow.id = 'day-forecast-row';
+    fcRow.className = 'day-hud-row';
+    const hud = document.getElementById('day-hud');
+    hud.insertBefore(fcRow, banner.nextSibling);
+  }
+  const fc = S.weatherForecast || [];
+  const WEMOJI = { sunny:'☀️', warm:'🌤', hot:'🥵', cloudy:'☁️', rainy:'🌧' };
+  const fcDays = fc.map((wid, i) => {
+    const label = i === 0 ? 'Tomorrow' : `Day ${S.day + i + 1}`;
+    return `<span class="fc-day">${label}: ${WEMOJI[wid] || '❓'}</span>`;
+  }).join('');
+  fcRow.innerHTML = `<span class="fc-label">Forecast</span>${fcDays || '<span class="fc-day" style="opacity:0.5">—</span>'}`;
+
+  // ── Customer personality badge ───────────────────────────────────────────
+  let pBadge = document.getElementById('day-personality-badge');
+  if (!pBadge) {
+    pBadge = document.createElement('div');
+    pBadge.id = 'day-personality-badge';
+    pBadge.className = 'day-hud-row';
+    const hud = document.getElementById('day-hud');
+    hud.insertBefore(pBadge, fcRow.nextSibling);
+  }
+  const ctype = CUSTOMER_TYPES[S.customerPersonality || 'regular'];
+  pBadge.innerHTML = ctype
+    ? `<span class="personality-badge">${ctype.label} — ${ctype.tip}</span>`
+    : '';
+
+  // ── Weather pill ─────────────────────────────────────────────────────────
   const w = WEATHER.find(x => x.id === S.currentWeather) || WEATHER[0];
   const pctChange = Math.round((w.mult - 1) * 100);
   const wpill = document.getElementById('day-weather-pill');
@@ -243,10 +305,19 @@ function renderDayHud() {
 function calcCostPerCup(recipe) {
   const eff = upgradeEffects();
   const p   = S.marketPrices;
-  return (recipe.lemonsPerCup * eff.lemonMult * p.lemons)
-       + (recipe.sugarPerCup  * p.sugar)
-       + (recipe.icePerCup    * eff.iceMult * p.ice)
-       + (p.cups);
+  let cost = (recipe.lemonsPerCup * eff.lemonMult * p.lemons)
+           + (recipe.sugarPerCup  * p.sugar)
+           + (recipe.icePerCup    * eff.iceMult * p.ice)
+           + (p.cups);
+  const ri = S.researchedIngredients || {};
+  Object.entries(SPECIAL_INGREDIENTS).forEach(([id, ing]) => {
+    const perCup = recipe[id + 'PerCup'] || 0;
+    if (perCup > 0) {
+      const discount = (ri[id] || 0) >= 2 ? 0.85 : 1.0;
+      cost += perCup * ing.marketPrice * discount;
+    }
+  });
+  return cost;
 }
 
 function updateCostPerCup() {
@@ -267,6 +338,33 @@ function renderRecipeSliders() {
   if (svLemons) svLemons.textContent = r.lemonsPerCup;
   if (svSugar)  svSugar.textContent  = r.sugarPerCup;
   if (svIce)    svIce.textContent    = r.icePerCup;
+
+  // Special ingredient sliders — shown only if researched ≥1 and in inventory
+  const ri = S.researchedIngredients || {};
+  const si = S.specialInventory || {};
+  let container = document.getElementById('special-ing-rows');
+  if (!container) {
+    container = document.createElement('div');
+    container.id = 'special-ing-rows';
+    const costRow = document.getElementById('cost-per-cup-row');
+    costRow.parentNode.insertBefore(container, costRow);
+  }
+  container.innerHTML = Object.entries(SPECIAL_INGREDIENTS).map(([id, ing]) => {
+    if ((ri[id] || 0) < 1 || (si[id] || 0) <= 0) return '';
+    const perCup = r[id + 'PerCup'] || 0;
+    const inSeason = getSeason(S.day) === ing.season;
+    const seasonTag = inSeason ? ` <span style="color:${SEASONS[ing.season].color};font-size:0.68rem">✦ In Season</span>` : '';
+    return `<div class="ing-row special-ing-row">
+      <span class="ing-icon">${ing.emoji}</span>
+      <span class="ing-name">${ing.label}${seasonTag}</span>
+      <div class="stepper-group">
+        <button class="step-btn" data-key="${id}PerCup" data-dir="-1" data-min="0" data-max="2" data-step="1">-</button>
+        <span class="step-val" id="sv-${id}">${perCup}</span>
+        <button class="step-btn" data-key="${id}PerCup" data-dir="1" data-min="0" data-max="2" data-step="1">+</button>
+      </div>
+    </div>`;
+  }).join('');
+
   updateCostPerCup();
 }
 
@@ -354,6 +452,47 @@ function renderMarket() {
       <div class="mi-bundles">${bundleHtml}</div>
     </div>`;
   }).join('');
+
+  // ── Special ingredients section (seasonal + research-gated) ─────────────
+  const currentSeason = getSeason(S.day);
+  const ri = S.researchedIngredients || {};
+  const si = S.specialInventory || {};
+  const specialHtml = Object.entries(SPECIAL_INGREDIENTS).map(([id, ing]) => {
+    if ((ri[id] || 0) < 1) return '';  // not researched
+    const inSeason   = ing.season === currentSeason;
+    const price      = inSeason ? ing.marketPrice : roundMoney(ing.marketPrice * 1.40);  // off-season markup
+    const discount   = (ri[id] || 0) >= 2 ? 0.85 : 1.0;
+    const finalPrice = roundMoney(price * discount);
+    const sInfo      = SEASONS[ing.season];
+    const seasonTag  = inSeason
+      ? `<span style="color:${sInfo.color};font-weight:700">✦ In Season</span>`
+      : `<span style="color:#9E9E9E">Off-season (+40%)</span>`;
+    const bundles = [[5, 'Sm'], [15, 'Md'], [30, 'Lg']].map(([qty, label]) => {
+      const cost = roundMoney(finalPrice * qty);
+      const canAfford = cost <= S.coins + 0.001;
+      return `<button class="mi-bundle-btn${canAfford ? '' : ' cannot-afford'}"
+        data-buy-special="${id}" data-qty="${qty}" data-cost="${cost}"
+        ${canAfford ? '' : 'disabled'}>
+        <span class="bun-label">${label}</span>
+        <span class="bun-qty">×${qty}</span>
+        <span class="bun-cost">${fmt(cost)}</span>
+        <span class="bun-save">${fmt(finalPrice)}/ea</span>
+      </button>`;
+    }).join('');
+    return `<div class="market-item-card special-ing-card">
+      <span class="mi-emoji">${ing.emoji}</span>
+      <div class="mi-info">
+        <div class="mi-name">${ing.label} ${seasonTag}</div>
+        <div class="mi-price">${fmt(finalPrice)} / portion${(ri[id]||0)>=2 ? ' <span style="color:#4CAF50">-15% mastery</span>' : ''}</div>
+        <div class="mi-stock">In stock: ${si[id] || 0}</div>
+      </div>
+      <div class="mi-bundles">${bundles}</div>
+    </div>`;
+  }).join('');
+
+  if (specialHtml) {
+    list.innerHTML += `<div class="market-section-header" style="background:linear-gradient(135deg,#7B1FA2,#4A148C)">🧪 Special Ingredients — ${SEASONS[currentSeason].label}</div>` + specialHtml;
+  }
 }
 
 function buyIngredient(key, qty, fixedCost) {
@@ -369,6 +508,28 @@ function buyIngredient(key, qty, fixedCost) {
   S.coins = Math.round(S.coins * 100) / 100;
   S.inventory[key] += qty;
   S.marketSpentToday += totalCost;
+  saveState();
+  animateCoinCounter(coinsBefore, S.coins, 400);
+  renderMarket();
+}
+
+function buySpecialIngredient(id, qty, cost) {
+  const ing = SPECIAL_INGREDIENTS[id];
+  if (!ing) return;
+  if ((S.researchedIngredients[id] || 0) < 1) {
+    showErrorToast(`Research ${ing.label} first in the Shop → Lab tab!`);
+    return;
+  }
+  if (cost > S.coins + 0.001) {
+    showErrorToast(`Not enough coins! Need ${fmt(cost)}`);
+    return;
+  }
+  SFX.buy();
+  const coinsBefore = S.coins;
+  S.coins = Math.round((S.coins - cost) * 100) / 100;
+  S.specialInventory = S.specialInventory || {};
+  S.specialInventory[id] = (S.specialInventory[id] || 0) + qty;
+  S.marketSpentToday += cost;
   saveState();
   animateCoinCounter(coinsBefore, S.coins, 400);
   renderMarket();
@@ -470,6 +631,9 @@ function renderShop() {
       </div>`;
     });
 
+  } else if (_shopTab === 'lab') {
+    html += renderLabTab();
+
   } else {
     // Tools tab - Lemonade Tycoon equipment in order
     UPGRADES.forEach(u => {
@@ -491,6 +655,74 @@ function renderShop() {
   }
 
   document.getElementById('shop-upgrades').innerHTML = html;
+}
+
+function renderLabTab() {
+  const currentSeason = getSeason(S.day);
+  const ri = S.researchedIngredients || {};
+  const sInfo = SEASONS[currentSeason];
+  let html = `<div class="employee-section-header" style="background:linear-gradient(135deg,#7B1FA2,#4A148C)">🧪 Research Lab — ${sInfo.label} <span style="font-size:0.72rem;opacity:0.8">Ingredients available this season</span></div>`;
+
+  Object.entries(SPECIAL_INGREDIENTS).forEach(([id, ing]) => {
+    const tier     = ri[id] || 0;
+    const inSeason = ing.season === currentSeason;
+    const cost     = tier < 3 ? ing.researchCosts[tier] : null;
+    const canResearch = inSeason && tier < 3 && S.coins >= cost;
+
+    const tierDescs = [
+      ing.hint,
+      `Usable in recipe. +${Math.round(ing.tasteBonus * 100)}% taste bonus in ${SEASONS[ing.bestSeason].label}.`,
+      `Mastered: 15% cheaper at market, wider taste sweet spot.`,
+      `Artisan: Combo with ${SPECIAL_INGREDIENTS[ing.comboWith].label} ${SPECIAL_INGREDIENTS[ing.comboWith].emoji} for +${Math.round(ing.comboBonus * 100)}% taste!`,
+    ];
+
+    const seasonBadge = inSeason
+      ? `<span class="lab-season-badge" style="background:${SEASONS[ing.season].bgAccent};color:${SEASONS[ing.season].color};border:1px solid ${SEASONS[ing.season].borderColor}">✦ Available now (${SEASONS[ing.season].label})</span>`
+      : `<span class="lab-season-badge" style="background:#F5F5F5;color:#9E9E9E">Available in ${SEASONS[ing.season].label}</span>`;
+
+    const tierPips = [0,1,2].map(t =>
+      `<span style="display:inline-block;width:10px;height:10px;border-radius:50%;margin:0 2px;background:${t < tier ? SEASONS[ing.season].color : '#E0E0E0'}"></span>`
+    ).join('');
+
+    html += `<div class="upgrade-card ${tier > 0 ? 'owned' : ''} ${!inSeason && tier === 0 ? 'locked' : ''}">
+      <div class="ug-icon" style="font-size:1.8rem">${ing.emoji}</div>
+      <div class="ug-info">
+        <div class="ug-name">${ing.label}</div>
+        ${seasonBadge}
+        <div style="margin:4px 0">${tierPips} <span style="font-size:0.7rem;color:#666">Tier ${tier}/3</span></div>
+        <div class="ug-desc">${tierDescs[tier]}</div>
+        ${cost !== null
+          ? `<button class="ug-buy-btn" data-research="${id}" ${canResearch ? '' : 'disabled'} style="margin-top:6px">
+              ${canResearch ? `🧪 Research Tier ${tier + 1} — ${fmt(cost)}` : !inSeason ? '🔒 Wrong season' : `Need ${fmt(cost)}`}
+            </button>`
+          : `<div style="color:var(--green-dark);font-weight:700;margin-top:6px">✦ Fully Mastered!</div>`
+        }
+      </div>
+    </div>`;
+  });
+  return html;
+}
+
+function buyResearch(id) {
+  const ing = SPECIAL_INGREDIENTS[id];
+  if (!ing) return;
+  if (!S.researchedIngredients) S.researchedIngredients = { mint:0, strawberry:0, applecinnamon:0, honey:0 };
+  const tier = S.researchedIngredients[id] || 0;
+  if (tier >= 3) return;
+  if (ing.season !== getSeason(S.day)) { showErrorToast(`${ing.label} research only available in ${SEASONS[ing.season].label}!`); return; }
+  const cost = ing.researchCosts[tier];
+  if (S.coins < cost) { showErrorToast(`Not enough coins! Need ${fmt(cost)}`); return; }
+  SFX.unlock ? SFX.unlock() : SFX.buy();
+  const coinsBefore = S.coins;
+  S.coins = Math.round((S.coins - cost) * 100) / 100;
+  S.researchedIngredients[id]++;
+  saveState();
+  animateCoinCounter(coinsBefore, S.coins, 400);
+  updateTopBar();
+  renderShop();
+  if (S.researchedIngredients[id] === 3) {
+    showAchievementToast({ emoji: ing.emoji, name: `${ing.label} Mastered!`, desc: `Tier 3 artisan unlocked.` });
+  }
 }
 
 function purchaseUpgrade(id) {
@@ -1260,7 +1492,9 @@ function initEvents() {
     if (next < min || next > max) return;
     S.recipe[key] = next;
     const valMap = { lemonsPerCup:'sv-lemons', sugarPerCup:'sv-sugar', icePerCup:'sv-ice' };
-    const valEl = document.getElementById(valMap[key]);
+    // Special ingredients: key = e.g. 'mintPerCup' → id = 'sv-mint'
+    const specialKey = Object.keys(SPECIAL_INGREDIENTS).find(id => id + 'PerCup' === key);
+    const valEl = document.getElementById(valMap[key] || (specialKey ? 'sv-' + specialKey : null));
     if (valEl) valEl.textContent = next;
     updateCostPerCup();
     renderDayHud();
@@ -1322,8 +1556,18 @@ function initEvents() {
     const adBtn = e.target.closest('[data-ad]');
     if (adBtn) { SFX.tap(); hireDailyAd(adBtn.dataset.ad); return; }
     const standBtn = e.target.closest('[data-stand]');
-    if (standBtn) { SFX.tap(); purchaseStandUpgrade(standBtn.dataset.stand, parseInt(standBtn.dataset.standtier)); }
+    if (standBtn) { SFX.tap(); purchaseStandUpgrade(standBtn.dataset.stand, parseInt(standBtn.dataset.standtier)); return; }
+    const researchBtn = e.target.closest('[data-research]');
+    if (researchBtn) { SFX.tap(); buyResearch(researchBtn.dataset.research); return; }
   });
+
+  // Market special ingredients (event delegation)
+  document.getElementById('market-items-list').addEventListener('click', e => {
+    const btn = e.target.closest('[data-buy-special]');
+    if (!btn) return;
+    SFX.tap();
+    buySpecialIngredient(btn.dataset.buySpecial, parseInt(btn.dataset.qty), parseFloat(btn.dataset.cost));
+  }, true);
 
   // Modal backdrop close
   document.getElementById('modal-settings').addEventListener('click', e => {

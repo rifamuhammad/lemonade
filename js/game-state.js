@@ -157,13 +157,124 @@ const ACHIEVEMENTS_DEF = [
   { id:'empire_builder',  name:'Empire Builder',      emoji:'🏰', desc:'Purchase the Castle Stand' },
   { id:'grossophobe',     name:'Zero Tolerance',      emoji:'🚫', desc:'Complete a day with zero Gross reactions' },
   { id:'reputation_max',  name:'Town Hero',           emoji:'🦸', desc:'Reach 95+ reputation' },
+  // -- Seasonal & Research ------------------
+  { id:'season_master',   name:'All-Season Seller',   emoji:'🌏', desc:'Earn a profit in all 4 seasons' },
+  { id:'artisan',         name:'Artisan Mixologist',  emoji:'🧪', desc:'Use a Tier 3 artisan combo and achieve Amazing taste' },
+  { id:'year_two',        name:'Year Two',            emoji:'📆', desc:'Survive a full year in business (60 days)' },
 ];
 
 const EVENTS = [
-  { id:'festival', title:'🎡 Summer Festival!', desc:'Festival Grounds open today - 3x customers!', duration:1 },
-  { id:'backtoschool', title:'🏫 Back to School', desc:'Park gets +20 customers for 3 days!', duration:3 },
-  { id:'heatwave', title:'🔥 Heat Wave!', desc:'All hot weather for 5 days - ice demand doubles!', duration:5 },
+  { id:'festival',       title:'🎡 Summer Festival!',        desc:'Festival Grounds open today — 3× customers!',           duration:1, season:'summer' },
+  { id:'backtoschool',   title:'🏫 Back to School',           desc:'Park gets +20 customers for 3 days!',                   duration:3, season:'fall'   },
+  { id:'heatwave',       title:'🔥 Heat Wave!',               desc:'All hot weather for 5 days — ice demand doubles!',      duration:5, season:'summer' },
+  { id:'cherryblossom',  title:'🌸 Cherry Blossom Festival',  desc:'The park is packed with visitors this weekend!',        duration:2, season:'spring' },
+  { id:'farmersmarket',  title:'🥕 Farmers Market Weekend',   desc:'Ingredient prices drop 20% this weekend!',              duration:1, season:'spring' },
+  { id:'beachvolleyball',title:'🏐 Beach Volleyball Tournament',desc:'The beach is swarming with athletes and fans!',       duration:2, season:'summer' },
+  { id:'harvestfair',    title:'🎃 Harvest Fair',             desc:'Families flood the market square for the fair!',        duration:2, season:'fall'   },
+  { id:'wintermarket',   title:'⛄ Winter Market',            desc:'The sidewalk and park buzz with warm-drink seekers!',   duration:3, season:'winter' },
+  { id:'hotdrinkcraze',  title:'🍵 Hot Drink Craze',         desc:'Honey lemonade is trending — warm flavors sell better!',duration:2, season:'winter' },
 ];
+
+// ── Seasonal system ──────────────────────────────────────────────────────────
+const SEASONS = {
+  spring: {
+    label:'🌸 Spring', color:'#43A047', bgAccent:'#E8F5E9', borderColor:'#81C784',
+    weatherWeights:{ sunny:0.30, warm:0.30, cloudy:0.25, rainy:0.15, hot:0.00 },
+    specialIngredient:'mint',
+    customerType:'healthnut',
+    eventIds:['cherryblossom','farmersmarket'],
+    marketSignals:{ sugar:-0.10, ice:-0.15 },
+  },
+  summer: {
+    label:'☀️ Summer', color:'#F9A825', bgAccent:'#FFFDE7', borderColor:'#FFD740',
+    weatherWeights:{ sunny:0.25, warm:0.25, hot:0.35, cloudy:0.10, rainy:0.05 },
+    specialIngredient:'strawberry',
+    customerType:'tourist',
+    eventIds:['heatwave','beachvolleyball','festival'],
+    marketSignals:{ ice:0.40, lemons:0.15 },
+  },
+  fall: {
+    label:'🍂 Fall', color:'#E65100', bgAccent:'#FFF3E0', borderColor:'#FFA040',
+    weatherWeights:{ sunny:0.20, warm:0.15, cloudy:0.35, rainy:0.25, hot:0.05 },
+    specialIngredient:'applecinnamon',
+    customerType:'student',
+    eventIds:['backtoschool','harvestfair'],
+    marketSignals:{ sugar:0.10, cups:0.15 },
+  },
+  winter: {
+    label:'❄️ Winter', color:'#1565C0', bgAccent:'#E3F2FD', borderColor:'#64B5F6',
+    weatherWeights:{ sunny:0.10, warm:0.05, cloudy:0.40, rainy:0.30, hot:0.00 },
+    specialIngredient:'honey',
+    customerType:'comfort',
+    eventIds:['wintermarket','hotdrinkcraze'],
+    marketSignals:{ ice:-0.30, lemons:-0.10 },
+  },
+};
+
+const SPECIAL_INGREDIENTS = {
+  mint: {
+    label:'Mint', emoji:'🌿', season:'spring',
+    marketPrice:0.30,
+    researchCosts:[50, 150, 350],
+    tasteBonus:0.06,
+    bestSeason:'spring',
+    bestWeather:['cloudy','rainy'],
+    comboWith:'strawberry',
+    comboBonus:0.12,
+    hint:'Refreshing on cool days. Pairs with strawberry for a summer special.',
+  },
+  strawberry: {
+    label:'Strawberry', emoji:'🍓', season:'summer',
+    marketPrice:0.60,
+    researchCosts:[50, 150, 350],
+    tasteBonus:0.08,
+    bestSeason:'summer',
+    bestWeather:['hot','warm'],
+    comboWith:'mint',
+    comboBonus:0.12,
+    hint:'Tourists love it. Shines on hot days.',
+  },
+  applecinnamon: {
+    label:'Apple Cinnamon', emoji:'🍎', season:'fall',
+    marketPrice:0.45,
+    researchCosts:[50, 150, 350],
+    tasteBonus:0.08,
+    bestSeason:'fall',
+    bestWeather:['cloudy','rainy'],
+    comboWith:'honey',
+    comboBonus:0.14,
+    hint:'Warm, spiced flavor. Students and comfort seekers love it.',
+  },
+  honey: {
+    label:'Honey', emoji:'🍯', season:'winter',
+    marketPrice:0.80,
+    researchCosts:[50, 150, 350],
+    tasteBonus:0.10,
+    bestSeason:'winter',
+    bestWeather:['cloudy','rainy'],
+    comboWith:'applecinnamon',
+    comboBonus:0.14,
+    hint:'Natural sweetener. Wide taste window, great on cold days.',
+  },
+};
+
+const CUSTOMER_TYPES = {
+  tourist:  { label:'🏖️ Tourists',       priceThresholdMult:1.20, demandMult:1.05, tip:'Price-tolerant and love fruity flavors.' },
+  student:  { label:'🎓 Students',        priceThresholdMult:0.80, demandMult:0.95, tip:'Budget-conscious — keep prices low!' },
+  healthnut:{ label:'🥗 Health Nuts',     priceThresholdMult:1.05, demandMult:1.00, tip:'They reward Amazing taste with bonus rep.' },
+  comfort:  { label:'☕ Comfort Seekers', priceThresholdMult:1.00, demandMult:1.00, tip:'Love warm flavors like honey and cinnamon.' },
+  regular:  { label:'👥 Regulars',        priceThresholdMult:1.00, demandMult:1.00, tip:'Your loyal crowd — rep matters most.' },
+};
+
+// Seasonal market signals for new events
+const MARKET_SEASON_EVENT_EFFECTS = {
+  cherryblossom:   [{ ingredient:'lemons', impact:0.10, reason:'Festival demand is boosting lemon prices.' }],
+  farmersmarket:   [{ ingredient:'lemons', impact:-0.20, reason:'The Farmers Market flooded supply — prices dipped.' }, { ingredient:'sugar', impact:-0.15, reason:'Farmers Market deals cut sugar costs.' }],
+  beachvolleyball: [{ ingredient:'ice', impact:0.18, reason:'Tournament crowds are draining ice supply.' }, { ingredient:'cups', impact:0.12, reason:'High cup demand at the beach event.' }],
+  harvestfair:     [{ ingredient:'sugar', impact:0.12, reason:'Harvest Fair baking demand is up.' }],
+  wintermarket:    [{ ingredient:'ice', impact:-0.20, reason:'Winter cold leaves ice in surplus.' }],
+  hotdrinkcraze:   [{ ingredient:'sugar', impact:0.08, reason:'Warm drink trend is pulling sugar demand.' }],
+};
 // Stand tiers match original Lemonade Tycoon GameHouse pricing
 const STAND_UPGRADES = [
   { tier:1, id:'stand_classic', name:'Classic Stand',  emoji:'🏪', cost:450,   custBonus:15, pitcherCap:8,  desc:'A classic look for a guaranteed hit! Pitcher 8, bigger storage space' },
@@ -204,7 +315,7 @@ function defaultState() {
     activeEventDays: 0,
     phase: 'day',
     currentLocation: 'sidewalk',
-    recipe: { cupsToMake: 10, lemonsPerCup: 2, sugarPerCup: 2, icePerCup: 1 },
+    recipe: { cupsToMake: 10, lemonsPerCup: 2, sugarPerCup: 2, icePerCup: 1, mintPerCup: 0, strawberryPerCup: 0, applecinnamonPerCup: 0, honeyPerCup: 0 },
     price: 1.75,
     consecutiveLegendary: 0,
     soldOutCount: 0,
@@ -223,6 +334,15 @@ function defaultState() {
     iceMeltedYesterday: 0,
     standTier: 0,
     locationRep: { sidewalk: 50, park: 50, beach: 50, market: 50, festival: 50 },
+    // Seasonal system
+    season: 'spring',
+    year: 1,
+    weatherForecast: [],
+    customerPersonality: 'regular',
+    researchedIngredients: { mint: 0, strawberry: 0, applecinnamon: 0, honey: 0 },
+    specialInventory: { mint: 0, strawberry: 0, applecinnamon: 0, honey: 0 },
+    seasonsProfit: { spring: false, summer: false, fall: false, winter: false },
+    artisanComboUsed: false,
     _savedAt: null,
   };
 }
@@ -249,7 +369,11 @@ function _parseRaw(raw) {
   const parsed = JSON.parse(raw);
   const ns = Object.assign(defaultState(), parsed);
   ns.inventory       = Object.assign({ lemons:0, sugar:0, cups:0, ice:0 }, parsed.inventory);
-  ns.recipe          = Object.assign({ cupsToMake:10, lemonsPerCup:2, sugarPerCup:2, icePerCup:1 }, parsed.recipe);
+  ns.recipe          = Object.assign({ cupsToMake:10, lemonsPerCup:2, sugarPerCup:2, icePerCup:1, mintPerCup:0, strawberryPerCup:0, applecinnamonPerCup:0, honeyPerCup:0 }, parsed.recipe);
+  ns.researchedIngredients = Object.assign({ mint:0, strawberry:0, applecinnamon:0, honey:0 }, parsed.researchedIngredients);
+  ns.specialInventory      = Object.assign({ mint:0, strawberry:0, applecinnamon:0, honey:0 }, parsed.specialInventory);
+  ns.seasonsProfit         = Object.assign({ spring:false, summer:false, fall:false, winter:false }, parsed.seasonsProfit);
+  if (!ns.weatherForecast || !Array.isArray(ns.weatherForecast)) ns.weatherForecast = [];
   ns.marketPrices    = Object.assign({ ...INGREDIENT_BASE }, parsed.marketPrices);
   ns.prevMarketPrices= Object.assign({ ...INGREDIENT_BASE }, parsed.prevMarketPrices);
   ns.marketNews      = Array.isArray(parsed.marketNews) ? parsed.marketNews : [];
@@ -307,11 +431,30 @@ function loadState() {
 }
 
 function initNewGame() {
+  S.season = getSeason(S.day);
+  S.year   = getYear(S.day);
+  S.customerPersonality = SEASONS[S.season].customerType;
   S.currentWeather = pickWeather();
+  S.weatherForecast = [
+    pickWeatherForDay(S.day + 1),
+    pickWeatherForDay(S.day + 2),
+    pickWeatherForDay(S.day + 3),
+  ];
   refreshMarketPrices();
 }
 
 function resumeLoadedGame() {
+  // Ensure season/year are synced after load
+  S.season = getSeason(S.day);
+  S.year   = getYear(S.day);
+  if (!S.customerPersonality) S.customerPersonality = SEASONS[S.season].customerType;
+  if (!S.weatherForecast || !S.weatherForecast.length) {
+    S.weatherForecast = [
+      pickWeatherForDay(S.day + 1),
+      pickWeatherForDay(S.day + 2),
+      pickWeatherForDay(S.day + 3),
+    ];
+  }
   updateTopBar();
 
   if (S.phase === 'result' && S.dayResult) {
