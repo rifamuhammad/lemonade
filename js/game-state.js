@@ -5,11 +5,11 @@
 // -----------------------------------------------
 
 const LOCATIONS = {
-  sidewalk: { name: 'Sidewalk',        emoji: '🏘️', customers: 18, rent: 0,  iceBonus: false },
-  park:     { name: 'Park',            emoji: '🌳', customers: 28, rent: 5,  iceBonus: false },
-  beach:    { name: 'Beach',           emoji: '🏖️', customers: 40, rent: 12, iceBonus: true  },
-  market:   { name: 'Market Square',   emoji: '🏪', customers: 54, rent: 20, iceBonus: false },
-  festival: { name: 'Festival Grounds',emoji: '🎪', customers: 82, rent: 35, iceBonus: false, eventOnly: true },
+  sidewalk: { name: 'Sidewalk',        emoji: '🏘️', customers: 30,  rent: 0,  iceBonus: false },
+  park:     { name: 'Park',            emoji: '🌳', customers: 50,  rent: 5,  iceBonus: false },
+  beach:    { name: 'Beach',           emoji: '🏖️', customers: 70,  rent: 12, iceBonus: true  },
+  market:   { name: 'Market Square',   emoji: '🏪', customers: 95,  rent: 20, iceBonus: false },
+  festival: { name: 'Festival Grounds',emoji: '🎪', customers: 140, rent: 35, iceBonus: false, eventOnly: true },
 };
 // Price above which customers start walking away (location-specific - wealthier spots tolerate higher prices)
 const LOCATION_TASTE_PROFILES = {
@@ -75,35 +75,61 @@ const UPGRADE_MAINTENANCE = {
 
 const STAND_TIER_MAINTENANCE = [0, 0.50, 1.50, 4.00];
 
-// Per-unit prices match small bundle rates (lemons 12/$4.80, sugar 12/$4.80, ice 50/$1.00, cups 75/$1.00)
-const INGREDIENT_BASE = { lemons: 0.40, sugar: 0.40, ice: 0.02, cups: 0.013 };
+// Per-unit prices match small bundle rates (lemons 12/$1.00, sugar 12/$0.75, ice 50/$1.00, cups 75/$1.00)
+const INGREDIENT_BASE = { lemons: 0.083, sugar: 0.063, ice: 0.02, cups: 0.013, mint: 0.30, strawberry: 0.60, applecinnamon: 0.45, honey: 0.80 };
 const INGREDIENT_INFO = {
-  lemons: { name: 'Lemons',    emoji: '🍋', unit: 'each',   desc: 'Fresh lemons for your recipe' },
-  sugar:  { name: 'Sugar',     emoji: '🍬', unit: 'portion',desc: 'Sweetens the lemonade' },
-  cups:   { name: 'Cups',      emoji: '🥤', unit: 'each',   desc: 'Paper cups to serve customers' },
-  ice:    { name: 'Ice',       emoji: '🧊', unit: 'portion',desc: 'Keeps it cold on hot days' },
+  lemons:        { name: 'Lemons',        emoji: '🍋', unit: 'each',    desc: 'Fresh lemons for your recipe' },
+  sugar:         { name: 'Sugar',         emoji: '🍬', unit: 'portion', desc: 'Sweetens the lemonade' },
+  cups:          { name: 'Cups',          emoji: '🥤', unit: 'each',    desc: 'Paper cups to serve customers' },
+  ice:           { name: 'Ice',           emoji: '🧊', unit: 'portion', desc: 'Keeps it cold on hot days' },
+  mint:          { name: 'Mint',          emoji: '🌿', unit: 'portion', desc: 'Fresh mint for cool drinks' },
+  strawberry:    { name: 'Strawberry',    emoji: '🍓', unit: 'portion', desc: 'Sweet strawberries' },
+  applecinnamon: { name: 'Apple Cinnamon',emoji: '🍎', unit: 'portion', desc: 'Warm spiced apple blend' },
+  honey:         { name: 'Honey',         emoji: '🍯', unit: 'portion', desc: 'Natural honey sweetener' },
 };
-// Bulk buying bundles - authentic LT GameHouse prices (qty, total cost)
+const MENU_SLOT_COSTS = [300, 700, 1500]; // unlock slots 2, 3, 4
+
+// Bulk buying bundles (qty, total cost)
 const MARKET_BUNDLES = {
   lemons: [
-    { qty:12,  cost:4.80, label:'Sm',  save:null       },
-    { qty:24,  cost:7.20, label:'Md',  save:'25% off'  },
-    { qty:48,  cost:9.60, label:'Lg',  save:'50% off'  },
+    { qty:12,  cost:1.00, label:'Small',  save:null      },
+    { qty:24,  cost:1.75, label:'Medium', save:null      },
+    { qty:48,  cost:3.00, label:'Large',  save:null      },
   ],
   sugar:  [
-    { qty:12,  cost:4.80, label:'Sm',  save:null       },
-    { qty:20,  cost:7.00, label:'Md',  save:'13% off'  },
-    { qty:50,  cost:15.00,label:'Lg',  save:'25% off'  },
+    { qty:12,  cost:0.75, label:'Small',  save:null      },
+    { qty:20,  cost:1.10, label:'Medium', save:null      },
+    { qty:50,  cost:2.50, label:'Large',  save:null      },
   ],
   ice:    [
-    { qty:50,  cost:1.00, label:'Sm',  save:null       },
-    { qty:200, cost:3.00, label:'Md',  save:'25% off'  },
-    { qty:500, cost:5.00, label:'Lg',  save:'50% off'  },
+    { qty:50,  cost:1.00, label:'Small',  save:null      },
+    { qty:200, cost:3.00, label:'Medium', save:null      },
+    { qty:500, cost:5.00, label:'Large',  save:null      },
   ],
   cups:   [
-    { qty:75,  cost:1.00, label:'Sm',  save:null       },
-    { qty:225, cost:2.35, label:'Md',  save:'22% off'  },
-    { qty:400, cost:3.75, label:'Lg',  save:'30% off'  },
+    { qty:75,  cost:1.00, label:'Small',  save:null },
+    { qty:225, cost:2.35, label:'Medium', save:null },
+    { qty:400, cost:3.75, label:'Large',  save:null },
+  ],
+  mint: [
+    { qty:10, cost:3.00,  label:'Small',  save:null },
+    { qty:25, cost:6.50,  label:'Medium', save:null },
+    { qty:50, cost:11.00, label:'Large',  save:null },
+  ],
+  strawberry: [
+    { qty:10, cost:6.00,  label:'Small',  save:null },
+    { qty:25, cost:13.00, label:'Medium', save:null },
+    { qty:50, cost:22.00, label:'Large',  save:null },
+  ],
+  applecinnamon: [
+    { qty:10, cost:4.50,  label:'Small',  save:null },
+    { qty:25, cost:10.00, label:'Medium', save:null },
+    { qty:50, cost:17.00, label:'Large',  save:null },
+  ],
+  honey: [
+    { qty:10, cost:8.00,  label:'Small',  save:null },
+    { qty:25, cost:17.00, label:'Medium', save:null },
+    { qty:50, cost:28.00, label:'Large',  save:null },
   ],
 };
 
@@ -211,52 +237,49 @@ const SEASONS = {
   },
 };
 
+// Special ingredient cost data — used by calcIngredientCost for recipe costing
 const SPECIAL_INGREDIENTS = {
-  mint: {
-    label:'Mint', emoji:'🌿', season:'spring',
-    marketPrice:0.30,
-    researchCosts:[50, 150, 350],
-    tasteBonus:0.06,
-    bestSeason:'spring',
-    bestWeather:['cloudy','rainy'],
-    comboWith:'strawberry',
-    comboBonus:0.12,
-    hint:'Refreshing on cool days. Pairs with strawberry for a summer special.',
-  },
-  strawberry: {
-    label:'Strawberry', emoji:'🍓', season:'summer',
-    marketPrice:0.60,
-    researchCosts:[50, 150, 350],
-    tasteBonus:0.08,
-    bestSeason:'summer',
-    bestWeather:['hot','warm'],
-    comboWith:'mint',
-    comboBonus:0.12,
-    hint:'Tourists love it. Shines on hot days.',
-  },
-  applecinnamon: {
-    label:'Apple Cinnamon', emoji:'🍎', season:'fall',
-    marketPrice:0.45,
-    researchCosts:[50, 150, 350],
-    tasteBonus:0.08,
-    bestSeason:'fall',
-    bestWeather:['cloudy','rainy'],
-    comboWith:'honey',
-    comboBonus:0.14,
-    hint:'Warm, spiced flavor. Students and comfort seekers love it.',
-  },
-  honey: {
-    label:'Honey', emoji:'🍯', season:'winter',
-    marketPrice:0.80,
-    researchCosts:[50, 150, 350],
-    tasteBonus:0.10,
-    bestSeason:'winter',
-    bestWeather:['cloudy','rainy'],
-    comboWith:'applecinnamon',
-    comboBonus:0.14,
-    hint:'Natural sweetener. Wide taste window, great on cold days.',
-  },
+  mint:         { label:'Mint',          emoji:'🌿', marketPrice:0.30 },
+  strawberry:   { label:'Strawberry',    emoji:'🍓', marketPrice:0.60 },
+  applecinnamon:{ label:'Apple Cinnamon',emoji:'🍎', marketPrice:0.45 },
+  honey:        { label:'Honey',         emoji:'🍯', marketPrice:0.80 },
 };
+
+// Purchasable drink variants — each unlocks a new menu slot with that drink
+const MENU_VARIANTS = [
+  { id:'classic',       name:'Classic Lemonade',    emoji:'🍋',  cost:0,    suggestedPrice:1.75,
+    recipe:{ lemonsPerCup:2, sugarPerCup:2, icePerCup:1 },
+    tasteBonus:0,    bestSeason:null,     bestWeather:[],
+    hint:'The timeless original — beloved everywhere.' },
+  { id:'mint',          name:'Mint Lemonade',        emoji:'🌿',  cost:250,  suggestedPrice:2.25,
+    recipe:{ lemonsPerCup:2, sugarPerCup:2, icePerCup:2, mintPerCup:1 },
+    tasteBonus:0.08, bestSeason:'spring', bestWeather:['cloudy','rainy'],
+    hint:'Cool and refreshing. Shines on spring days.' },
+  { id:'pink',          name:'Pink Lemonade',        emoji:'🌸',  cost:300,  suggestedPrice:2.25,
+    recipe:{ lemonsPerCup:2, sugarPerCup:3, icePerCup:1, strawberryPerCup:1 },
+    tasteBonus:0.08, bestSeason:'summer', bestWeather:['hot','warm'],
+    hint:'Sweet and photogenic. Tourists love it.' },
+  { id:'sparkling',     name:'Sparkling Lemonade',   emoji:'🫧',  cost:400,  suggestedPrice:2.50,
+    recipe:{ lemonsPerCup:3, sugarPerCup:2, icePerCup:2 },
+    tasteBonus:0.07, bestSeason:null,     bestWeather:['hot','warm'],
+    hint:'Premium and bubbly. Commands higher prices.' },
+  { id:'strawberry',    name:'Strawberry Lemonade',  emoji:'🍓',  cost:500,  suggestedPrice:2.75,
+    recipe:{ lemonsPerCup:2, sugarPerCup:2, icePerCup:2, strawberryPerCup:1 },
+    tasteBonus:0.09, bestSeason:'summer', bestWeather:['hot','warm'],
+    hint:'Summer blockbuster. Tourists go wild for it.' },
+  { id:'applecinnamon', name:'Apple Cinnamon',       emoji:'🍎',  cost:600,  suggestedPrice:2.75,
+    recipe:{ lemonsPerCup:2, sugarPerCup:2, icePerCup:0, applecinnamonPerCup:1 },
+    tasteBonus:0.10, bestSeason:'fall',   bestWeather:['cloudy','rainy'],
+    hint:'Warm and spiced. Fall comfort seekers adore it.' },
+  { id:'honey',         name:'Honey Lemonade',       emoji:'🍯',  cost:700,  suggestedPrice:3.00,
+    recipe:{ lemonsPerCup:3, sugarPerCup:1, icePerCup:0, honeyPerCup:1 },
+    tasteBonus:0.12, bestSeason:'winter', bestWeather:['cloudy','rainy'],
+    hint:'Soothing and premium. Winter crowds love it.' },
+  { id:'tropical',      name:'Tropical Mix',         emoji:'🌴',  cost:1000, suggestedPrice:3.50,
+    recipe:{ lemonsPerCup:2, sugarPerCup:2, icePerCup:2, mintPerCup:1, strawberryPerCup:1 },
+    tasteBonus:0.15, bestSeason:'summer', bestWeather:['hot','warm'],
+    hint:'The ultimate summer special. Commands premium prices.' },
+];
 
 const CUSTOMER_TYPES = {
   tourist:  { label:'🏖️ Tourists',       priceThresholdMult:1.20, demandMult:1.05, tip:'Price-tolerant and love fruity flavors.' },
@@ -298,10 +321,10 @@ let S = {};
 
 function defaultState() {
   return {
-    coins: 1000000,
+    coins: 40,
     day: 1,
     reputation: 50,
-    inventory: { lemons: 0, sugar: 0, cups: 0, ice: 0 },
+    inventory: { lemons: 0, sugar: 0, cups: 0, ice: 0, mint: 0, strawberry: 0, applecinnamon: 0, honey: 0 },
     upgrades: {},
     unlockedLocations: ['sidewalk','park','beach','market'],
     achievements: {},
@@ -315,8 +338,12 @@ function defaultState() {
     activeEventDays: 0,
     phase: 'day',
     currentLocation: 'sidewalk',
-    recipe: { cupsToMake: 10, lemonsPerCup: 2, sugarPerCup: 2, icePerCup: 1, mintPerCup: 0, strawberryPerCup: 0, applecinnamonPerCup: 0, honeyPerCup: 0 },
-    price: 1.75,
+    menuSlots: 1,
+    menu: [
+      { variantId:'classic', recipe: { cupsToMake:10, lemonsPerCup:2, sugarPerCup:2, icePerCup:1, mintPerCup:0, strawberryPerCup:0, applecinnamonPerCup:0, honeyPerCup:0 }, price:1.75, active:true },
+      null, null, null,
+    ],
+    unlockedVariants: ['classic'],
     consecutiveLegendary: 0,
     soldOutCount: 0,
     currentWeather: 'sunny',
@@ -339,10 +366,7 @@ function defaultState() {
     year: 1,
     weatherForecast: [],
     customerPersonality: 'regular',
-    researchedIngredients: { mint: 0, strawberry: 0, applecinnamon: 0, honey: 0 },
-    specialInventory: { mint: 0, strawberry: 0, applecinnamon: 0, honey: 0 },
     seasonsProfit: { spring: false, summer: false, fall: false, winter: false },
-    artisanComboUsed: false,
     _savedAt: null,
   };
 }
@@ -368,11 +392,44 @@ function saveState() {
 function _parseRaw(raw) {
   const parsed = JSON.parse(raw);
   const ns = Object.assign(defaultState(), parsed);
-  ns.inventory       = Object.assign({ lemons:0, sugar:0, cups:0, ice:0 }, parsed.inventory);
-  ns.recipe          = Object.assign({ cupsToMake:10, lemonsPerCup:2, sugarPerCup:2, icePerCup:1, mintPerCup:0, strawberryPerCup:0, applecinnamonPerCup:0, honeyPerCup:0 }, parsed.recipe);
-  ns.researchedIngredients = Object.assign({ mint:0, strawberry:0, applecinnamon:0, honey:0 }, parsed.researchedIngredients);
-  ns.specialInventory      = Object.assign({ mint:0, strawberry:0, applecinnamon:0, honey:0 }, parsed.specialInventory);
-  ns.seasonsProfit         = Object.assign({ spring:false, summer:false, fall:false, winter:false }, parsed.seasonsProfit);
+  ns.inventory = Object.assign({ lemons:0, sugar:0, cups:0, ice:0, mint:0, strawberry:0, applecinnamon:0, honey:0 }, parsed.inventory);
+  // Migration: old saves stored special ingredients in specialInventory — merge into inventory
+  if (parsed.specialInventory) {
+    ['mint','strawberry','applecinnamon','honey'].forEach(id => {
+      if (parsed.specialInventory[id]) ns.inventory[id] = (ns.inventory[id]||0) + parsed.specialInventory[id];
+    });
+  }
+
+  // Menu migration: old saves have recipe/price but not menu
+  const defaultRecipe = { cupsToMake:10, lemonsPerCup:2, sugarPerCup:2, icePerCup:1, mintPerCup:0, strawberryPerCup:0, applecinnamonPerCup:0, honeyPerCup:0 };
+  if (parsed.recipe && !parsed.menu) {
+    ns.menu = [
+      { recipe: Object.assign({}, defaultRecipe, parsed.recipe), price: parsed.price || 1.75, active: true },
+      null, null, null,
+    ];
+    ns.menuSlots = 1;
+  } else if (Array.isArray(parsed.menu)) {
+    ns.menu = [0,1,2,3].map(i => {
+      const slot = parsed.menu[i];
+      if (!slot) return i === 0 ? { recipe: { ...defaultRecipe }, price: 1.75, active: true } : null;
+      return { ...slot, recipe: Object.assign({}, defaultRecipe, slot.recipe), active: slot.active !== false };
+    });
+    ns.menuSlots = parsed.menuSlots || 1;
+  }
+
+  // unlockedVariants: migrate from old researchedIngredients if present
+  if (!parsed.unlockedVariants) {
+    const ri = parsed.researchedIngredients || {};
+    const unlocked = ['classic'];
+    if ((ri.mint         || 0) >= 1) unlocked.push('mint');
+    if ((ri.strawberry   || 0) >= 1) unlocked.push('strawberry', 'pink');
+    if ((ri.applecinnamon|| 0) >= 1) unlocked.push('applecinnamon');
+    if ((ri.honey        || 0) >= 1) unlocked.push('honey');
+    ns.unlockedVariants = [...new Set(unlocked)];
+  } else {
+    ns.unlockedVariants = Array.isArray(parsed.unlockedVariants) ? parsed.unlockedVariants : ['classic'];
+  }
+  ns.seasonsProfit = Object.assign({ spring:false, summer:false, fall:false, winter:false }, parsed.seasonsProfit);
   if (!ns.weatherForecast || !Array.isArray(ns.weatherForecast)) ns.weatherForecast = [];
   ns.marketPrices    = Object.assign({ ...INGREDIENT_BASE }, parsed.marketPrices);
   ns.prevMarketPrices= Object.assign({ ...INGREDIENT_BASE }, parsed.prevMarketPrices);
@@ -634,6 +691,34 @@ const TUTORIAL_STEPS = [
     art: null,
   },
 ];
+
+// ── Menu item name / emoji — uses variantId when available ───────────────────
+function getMenuItemName(recipe, variantId) {
+  if (variantId) {
+    const v = MENU_VARIANTS.find(mv => mv.id === variantId);
+    if (v) return v.name;
+  }
+  // Fallback for legacy saves
+  if ((recipe.mintPerCup || 0) >= 1 && (recipe.strawberryPerCup || 0) >= 1) return 'Tropical Mix';
+  if ((recipe.honeyPerCup || 0) >= 1)         return 'Honey Lemonade';
+  if ((recipe.applecinnamonPerCup || 0) >= 1) return 'Apple Cinnamon';
+  if ((recipe.strawberryPerCup || 0) >= 1)    return 'Strawberry Lemonade';
+  if ((recipe.mintPerCup || 0) >= 1)          return 'Mint Lemonade';
+  return 'Classic Lemonade';
+}
+
+function getMenuItemEmoji(recipe, variantId) {
+  if (variantId) {
+    const v = MENU_VARIANTS.find(mv => mv.id === variantId);
+    if (v) return v.emoji;
+  }
+  if ((recipe.mintPerCup || 0) >= 1 && (recipe.strawberryPerCup || 0) >= 1) return '🌴';
+  if ((recipe.honeyPerCup || 0) >= 1)         return '🍯';
+  if ((recipe.applecinnamonPerCup || 0) >= 1) return '🍎';
+  if ((recipe.strawberryPerCup || 0) >= 1)    return '🍓';
+  if ((recipe.mintPerCup || 0) >= 1)          return '🌿';
+  return '🍋';
+}
 
 let _tutStep = 0;
 

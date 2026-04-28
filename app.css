@@ -143,6 +143,15 @@ body {
   padding: 14px 14px 20px;
   min-height: 100%;
 }
+/* Market screen fills the full container height for sticky layout */
+#screen-market.screen.active {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+  min-height: unset;
+  padding: 0;
+}
 
 .screen.active {
   display: block;
@@ -760,10 +769,10 @@ input[type="range"]::-moz-range-thumb {
 @keyframes staffBobBig { from { transform: translateY(0) rotate(-2deg); } to { transform: translateY(-6px) rotate(2deg); } }
 @keyframes staffSway   { from { transform: rotate(-3deg); } to { transform: rotate(3deg); } }
 
-/* Customer layer */
+/* Customer layer — above stand (10) and price tag (15), always visible */
 #scene-customers {
   position: absolute; inset: 0;
-  z-index: 6; pointer-events: none;
+  z-index: 18; pointer-events: none;
   overflow: visible;
 }
 
@@ -987,18 +996,298 @@ input[type="range"]::-moz-range-thumb {
 #next-day-btn:active { transform: scale(0.97); }
 
 /* -- MARKET SCREEN -- */
-.market-summary {
-  display: flex;
-  justify-content: space-between;
-  background: var(--white);
-  border-radius: var(--radius-sm);
-  padding: 10px 14px;
-  margin-bottom: 12px;
-  box-shadow: var(--shadow);
+
+/* Market screen uses flex-column so sticky top/bottom are fixed, middle scrolls */
+.market-screen-layout {
+  flex-direction: column;
+  overflow: hidden;
+  padding: 0 !important;
 }
-.market-summary-item { text-align: center; }
-.market-summary-item .ms-val { font-family: var(--font); font-size: 1.1rem; display: block; }
-.market-summary-item .ms-lbl { font-size: 0.65rem; color: var(--gray); text-transform: uppercase; }
+
+/* Sticky top panel: inventory + budget */
+#market-sticky-top {
+  flex-shrink: 0;
+  background: var(--white);
+  border-bottom: 1.5px solid var(--gray-light);
+  padding: 10px 14px 8px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  z-index: 10;
+}
+#market-inv-bar {
+  margin-bottom: 8px;
+}
+/* ── Market stock bar (top) ─── */
+#market-inv-grid {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-bottom: 8px;
+}
+.mkt-stock-chip {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: var(--gray-light);
+  border-radius: 20px;
+  padding: 4px 10px;
+  font-size: 0.82rem;
+}
+.mkt-stock-chip.low { background: rgba(229,57,53,0.12); }
+.mkt-stock-chip-qty { font-family: var(--font); color: var(--navy); }
+.mkt-stock-chip.low .mkt-stock-chip-qty { color: #E53935; }
+.mkt-chip {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 8px 10px;
+  border-radius: 14px;
+  border: 2px solid var(--gray-light);
+  background: var(--white);
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s, transform 0.12s;
+  min-width: 52px;
+  -webkit-tap-highlight-color: transparent;
+}
+.mkt-chip.selected {
+  border-color: var(--orange);
+  background: #fff3e0;
+  transform: scale(1.06);
+}
+.mkt-chip.low { background: rgba(229,57,53,0.07); border-color: rgba(229,57,53,0.3); }
+.mkt-chip.low .mkt-chip-qty { color: #E53935; }
+.mkt-chip.special { border-color: #AB47BC; }
+.mkt-chip.special.selected { border-color: #7B1FA2; background: #F3E5F5; }
+.mkt-chip-emoji { font-size: 1.4rem; line-height: 1; }
+.mkt-chip-qty { font-family: var(--font); font-size: 0.78rem; color: var(--navy); }
+
+/* ── Market focus panel ─── */
+.mkt-focus-card {
+  background: var(--white);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 14px;
+}
+.mkt-focus-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+.mkt-focus-emoji { font-size: 2.2rem; flex-shrink: 0; }
+.mkt-focus-meta { flex: 1; }
+.mkt-focus-name { font-family: var(--font); font-size: 1rem; color: var(--navy); }
+.mkt-focus-price { font-size: 0.78rem; color: var(--gray); margin-top: 2px; }
+.mkt-focus-stock { text-align: center; flex-shrink: 0; }
+.mkt-stock-num { display: block; font-family: var(--font); font-size: 1.3rem; color: var(--navy); }
+.mkt-stock-num.low { color: #E53935; }
+.mkt-stock-lbl { font-size: 0.65rem; color: var(--gray); }
+
+.mkt-bundles { display: flex; flex-direction: column; gap: 8px; }
+.mkt-bundle-row {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  align-items: center;
+  gap: 10px;
+  background: var(--gray-light);
+  border-radius: 12px;
+  padding: 10px 12px;
+  border: 2px solid transparent;
+  transition: border-color 0.15s, background 0.15s;
+}
+.mkt-bundle-row.has-qty { border-color: var(--orange); background: #fff8f0; }
+.mkt-bundle-info { display: flex; flex-direction: column; gap: 1px; }
+.mkt-bundle-label { font-family: var(--font); font-size: 0.9rem; color: var(--navy); }
+.mkt-bundle-cost { font-size: 0.72rem; color: var(--gray); }
+.mkt-bundle-controls { display: flex; align-items: center; gap: 0; }
+.mkt-big-btn {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  border: 2px solid var(--orange);
+  background: var(--white);
+  color: var(--orange);
+  font-size: 1.3rem;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  -webkit-tap-highlight-color: transparent;
+  transition: background 0.12s;
+}
+.mkt-big-btn:active { background: #fff3e0; }
+.mkt-big-btn:disabled { opacity: 0.3; cursor: default; }
+.mkt-bundle-qty {
+  min-width: 32px;
+  text-align: center;
+  font-family: var(--font);
+  font-size: 1rem;
+  color: var(--navy);
+}
+.mkt-bundle-subtotal {
+  font-family: var(--font);
+  font-size: 0.8rem;
+  color: var(--orange);
+  text-align: right;
+}
+.price-change.up { color: var(--red); }
+.price-change.down { color: var(--green-dark); }
+
+/* ── Market ingredient rows ──────────────────────────────────────────────── */
+.mkt-ing-row {
+  background: var(--white);
+  border-radius: 14px;
+  padding: 10px 12px;
+  margin-bottom: 8px;
+  border: 2px solid transparent;
+  transition: border-color 0.15s;
+}
+.mkt-ing-row.has-cart { border-color: var(--orange); background: #fffbf5; }
+.mkt-ing-row.special  { background: #fdf6ff; }
+.mkt-ing-row.special.has-cart { background: #fdf6ff; }
+
+/* Row 1: title */
+.mkt-ing-header {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin-bottom: 8px;
+  flex-wrap: wrap;
+}
+.mkt-ing-emoji { font-size: 1.3rem; flex-shrink: 0; }
+.mkt-ing-name  { font-family: var(--font); font-size: 0.9rem; color: var(--navy); }
+.mkt-ing-price { font-size: 0.72rem; color: var(--gray); }
+.mkt-ing-stock { font-size: 0.72rem; color: var(--navy); margin-left: auto; }
+.low-stock     { color: #E53935; font-weight: 700; }
+
+/* Row 2: buttons + cart pill — pill uses placeholder so buttons never shift */
+.mkt-ing-btns-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.mkt-add-btns { display: flex; gap: 6px; flex: 1; }
+.mkt-add-btn {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 8px 4px;
+  border-radius: 10px;
+  border: 2px solid var(--orange);
+  background: var(--white);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: background 0.12s, transform 0.1s;
+  gap: 2px;
+  min-width: 0;
+}
+.mkt-add-btn:active { background: #fff3e0; transform: scale(0.96); }
+.mkt-add-btn.cant-afford { opacity: 0.3; pointer-events: none; }
+.mab-size { font-family: var(--font); font-size: 0.85rem; color: var(--orange); line-height: 1; }
+.mab-qty  { font-size: 0.72rem; color: var(--navy); line-height: 1; }
+.mab-cost { font-size: 0.65rem; color: var(--gray); line-height: 1; }
+
+/* Cart pill — fixed width so buttons don't shift when it appears */
+.mkt-cart-badge,
+.mkt-cart-badge-placeholder {
+  width: 72px;
+  flex-shrink: 0;
+}
+.mkt-cart-badge {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-family: var(--font);
+  font-size: 0.82rem;
+  color: var(--orange);
+  background: #fff3e0;
+  border-radius: 20px;
+  padding: 5px 8px;
+  border: 1.5px solid var(--orange);
+}
+.mkt-cart-badge-placeholder { display: block; }
+.mkt-clear-ing {
+  background: none;
+  border: none;
+  color: var(--orange);
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+  padding: 0;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+/* legacy inv-item (kept for safety) */
+.inv-item {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  background: var(--gray-light);
+  border-radius: 20px;
+  padding: 4px 10px;
+  font-size: 0.82rem;
+}
+.inv-item .inv-emoji { font-size: 1rem; }
+.inv-item .inv-name { color: var(--gray); font-size: 0.72rem; }
+.inv-item .inv-qty { font-family: var(--font); color: var(--navy); font-size: 0.9rem; }
+.inv-item.inv-item-low { background: rgba(229,57,53,0.12); }
+.inv-item.inv-item-low .inv-qty { color: #E53935; }
+#market-budget-bar {
+  display: flex;
+  gap: 16px;
+  font-size: 0.8rem;
+  color: var(--navy-light);
+}
+#market-budget-bar strong { color: var(--navy); font-size: 0.88rem; }
+#ms-budget { color: var(--green-dark); }
+#ms-spent  { color: var(--orange); }
+
+/* Scrollable items */
+#market-scroll-area {
+  flex: 1;
+  overflow-y: auto;
+  padding: 10px 14px;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Sticky cart footer */
+#market-cart-footer {
+  flex-shrink: 0;
+  background: var(--white);
+  border-top: 1.5px solid var(--gray-light);
+  padding: 10px 14px;
+  box-shadow: 0 -2px 8px rgba(0,0,0,0.08);
+  z-index: 10;
+}
+#cart-summary-line {
+  font-size: 0.78rem;
+  color: var(--navy-light);
+  min-height: 18px;
+  margin-bottom: 8px;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+#cart-checkout-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+#cart-total-display {
+  font-family: var(--font);
+  font-size: 1.1rem;
+  color: var(--navy);
+}
+#cart-buy-btn {
+  padding: 10px 22px;
+  font-size: 0.95rem;
+  border-radius: 12px;
+}
+#cart-buy-btn:disabled { opacity: 0.4; cursor: not-allowed; }
 
 #market-intel-card {
   background: linear-gradient(135deg, #fff8dc, #fff3cd);
@@ -1053,11 +1342,13 @@ input[type="range"]::-moz-range-thumb {
   border-radius: var(--radius);
   box-shadow: var(--shadow);
   padding: 12px 14px;
-  flex-wrap: wrap;
   margin-bottom: 10px;
+}
+.mi-header {
   display: flex;
   align-items: center;
   gap: 10px;
+  margin-bottom: 10px;
 }
 .mi-emoji { font-size: 1.8rem; flex-shrink: 0; }
 .mi-info { flex: 1; }
@@ -1069,57 +1360,75 @@ input[type="range"]::-moz-range-thumb {
 .mi-price .price-change.down { color: var(--green-dark); }
 
 /* Bundle buttons � 3 per ingredient, full-width row below emoji+info */
-.mi-bundles {
-  display: flex;
-  gap: 5px;
-  margin-top: 8px;
-  width: 100%;
-  flex-basis: 100%;
-}
-.mi-bundle-btn {
-  flex: 1;
-  min-width: 0;
+
+/* Bundle stepper rows */
+.mi-steppers {
   display: flex;
   flex-direction: column;
+  gap: 6px;
+}
+.bun-stepper {
+  display: flex;
   align-items: center;
-  gap: 1px;
+  gap: 8px;
   background: var(--gray-light);
-  border: 2px solid transparent;
   border-radius: 10px;
-  padding: 5px 4px;
-  cursor: pointer;
-  -webkit-tap-highlight-color: transparent;
+  padding: 7px 10px;
+  border: 2px solid transparent;
   transition: border-color 0.15s, background 0.15s;
-  position: relative;
 }
-.mi-bundle-btn:active { background: #ffe0b2; border-color: var(--orange); }
-.mi-bundle-btn.cannot-afford { opacity: 0.45; cursor: not-allowed; }
-.mi-bundle-btn .bun-label {
+.bun-stepper.has-qty {
+  border-color: var(--orange);
+  background: #fff8f0;
+}
+.bun-step-label {
   font-family: var(--font);
-  font-size: 0.72rem;
-  color: var(--gray);
-  line-height: 1;
+  font-size: 0.88rem;
+  color: var(--navy);
+  width: 54px;
+  flex-shrink: 0;
 }
-.mi-bundle-btn .bun-qty {
+.bun-step-items {
+  font-size: 0.75rem;
+  color: var(--gray);
+  flex: 1;
+}
+.bun-step-controls {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.bun-step-btn {
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  border: 1.5px solid var(--orange);
+  background: var(--white);
+  color: var(--orange);
+  font-size: 1.1rem;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  -webkit-tap-highlight-color: transparent;
+  transition: background 0.12s;
+}
+.bun-step-btn:active { background: #ffe0b2; }
+.bun-step-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+.bun-step-qty {
   font-family: var(--font);
   font-size: 1rem;
   color: var(--navy);
-  line-height: 1.1;
+  min-width: 20px;
+  text-align: center;
 }
-.mi-bundle-btn .bun-cost {
+.bun-step-cost {
   font-family: var(--font);
-  font-size: 0.82rem;
+  font-size: 0.85rem;
   color: var(--orange);
-  line-height: 1;
-}
-.mi-bundle-btn .bun-save {
-  font-size: 0.6rem;
-  color: var(--green-dark);
-  background: #e8f5e9;
-  border-radius: 4px;
-  padding: 1px 4px;
-  line-height: 1.3;
-  font-weight: 700;
+  min-width: 44px;
+  text-align: right;
 }
 
 /* -- SHOP SCREEN -- */
@@ -1810,21 +2119,21 @@ input[type="range"]::-moz-range-thumb {
   white-space: nowrap;
 }
 
+
 /* Season banner */
 #day-season-banner {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 7px 14px;
+  padding: 8px 12px;
   border-radius: 10px;
-  margin: 8px 14px 4px;
   border: 1.5px solid #FFD740;
+  margin-bottom: 6px;
   transition: background 0.5s, border-color 0.5s;
 }
 .season-label {
   font-family: var(--font);
   font-size: 0.95rem;
-  font-weight: 700;
 }
 .season-day-txt {
   font-size: 0.72rem;
@@ -1844,37 +2153,36 @@ input[type="range"]::-moz-range-thumb {
   align-items: center;
   gap: 5px;
   overflow-x: auto;
-  padding: 0 14px 4px;
-  background: var(--navy);
+  padding: 0 2px 4px;
   scrollbar-width: none;
 }
 #day-forecast-row::-webkit-scrollbar { display: none; }
 .fc-label {
-  font-size: 0.68rem;
-  color: rgba(255,255,255,0.5);
+  font-size: 0.7rem;
+  color: var(--gray);
   flex-shrink: 0;
   margin-right: 2px;
 }
 .fc-day {
   font-size: 0.72rem;
-  color: rgba(255,255,255,0.85);
-  background: rgba(255,255,255,0.10);
+  color: var(--navy);
+  background: var(--white);
+  border: 1px solid var(--gray-light);
   border-radius: 8px;
   padding: 3px 8px;
   white-space: nowrap;
   flex-shrink: 0;
 }
 
-/* Customer personality badge */
-#day-personality-badge {
-  padding: 0 14px 4px;
-  background: var(--navy);
+/* Customer personality row */
+#day-personality-row {
+  margin-top: 5px;
 }
 .personality-badge {
   display: inline-block;
   font-size: 0.70rem;
-  color: rgba(255,255,255,0.75);
-  background: rgba(255,255,255,0.08);
+  color: var(--navy-light);
+  background: var(--gray-light);
   border-radius: 20px;
   padding: 3px 10px;
 }
@@ -1887,6 +2195,7 @@ input[type="range"]::-moz-range-thumb {
 .day-hud-row {
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: 8px;
   margin-bottom: 7px;
 }
@@ -2227,4 +2536,188 @@ input[type="range"]::-moz-range-thumb {
   padding: 12px 20px; font-family: var(--font); font-size: 1rem;
   font-weight: 700; color: var(--navy); cursor: pointer;
   box-shadow: 0 3px 10px rgba(255,140,0,0.35);
+}
+
+/* ── Menu Tabs (Day screen) ─────────────────────────────────────────────── */
+#menu-tab-bar {
+  margin-bottom: 6px;
+}
+.menu-tab-row {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.menu-tab-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 2.5px solid var(--gray-light);
+  background: var(--white);
+  font-size: 1.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: border-color 0.15s, background 0.15s, transform 0.12s;
+  line-height: 1;
+  padding: 0;
+}
+.menu-tab-icon.active {
+  border-color: var(--orange);
+  background: #fff3e0;
+  transform: scale(1.1);
+  box-shadow: 0 2px 8px rgba(255,140,0,0.25);
+}
+.menu-tab-icon.inactive-drink { opacity: 0.45; }
+.menu-tab-label {
+  font-family: var(--font);
+  font-size: 0.85rem;
+  color: var(--navy);
+  font-weight: 700;
+  margin-top: 5px;
+  padding-left: 2px;
+}
+.menu-tab-label.label-off { color: #999; }
+
+/* Slot toggle button inside menu card */
+.btn-slot-toggle {
+  font-family: var(--font);
+  font-size: 0.85rem;
+  border: none;
+  border-radius: 12px;
+  padding: 8px 18px;
+  cursor: pointer;
+}
+.btn-slot-toggle.slot-on  { background: #E8F5E9; color: #2E7D32; }
+.btn-slot-toggle.slot-off { background: #F5F5F5; color: var(--gray); }
+
+/* ── Per-drink result breakdown ─────────────────────────────────────────── */
+.result-drinks-breakdown {
+  padding: 10px 14px;
+  margin-bottom: 12px;
+}
+.rdb-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.83rem;
+  color: var(--navy);
+  padding: 5px 0;
+  border-bottom: 1px solid var(--gray-light);
+}
+.rdb-row:last-child { border-bottom: none; }
+
+
+/* ── Compact Recipe Card ────────────────────────────────────────────────── */
+.compact-recipe { padding: 10px 12px !important; }
+.cr-ingredients-section { margin-bottom: 6px; }
+.cr-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 4px;
+}
+.cr-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.cr-icon {
+  font-size: 1rem;
+  flex-shrink: 0;
+  width: 20px;
+  text-align: center;
+}
+.cr-label {
+  flex: 1;
+  font-size: 0.8rem;
+  color: var(--navy);
+}
+.cr-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 4px;
+}
+.cr-drink-name {
+  font-family: var(--font);
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--navy);
+}
+.cr-hint {
+  font-size: 0.72rem;
+  color: var(--gray);
+  margin-bottom: 6px;
+  font-style: italic;
+}
+.cr-ing-preview {
+  font-size: 0.75rem;
+  color: var(--navy);
+  background: var(--cream);
+  border-radius: 8px;
+  padding: 4px 8px;
+  margin-bottom: 6px;
+  letter-spacing: 0.02em;
+}
+.cr-warning {
+  font-size: 0.72rem;
+  color: #C62828;
+  background: #FFEBEE;
+  border-radius: 6px;
+  padding: 4px 8px;
+  margin-bottom: 6px;
+}
+.cr-stepper {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.cr-btn {
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  border: 1.5px solid var(--gray-light);
+  background: #fff;
+  font-size: 1.1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-family: var(--font);
+  padding: 0;
+  flex-shrink: 0;
+}
+.cr-btn:active { background: var(--cream); }
+.cr-val {
+  min-width: 40px;
+  text-align: center;
+  font-family: var(--font);
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--orange);
+}
+.cr-price-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #FFF3E0;
+  border-radius: 8px;
+  padding: 6px 10px;
+  margin-bottom: 5px;
+}
+.cr-price-label {
+  font-family: var(--font);
+  font-size: 0.85rem;
+  color: var(--orange);
+}
+.cr-cost-row {
+  text-align: center;
+  font-size: 0.75rem;
+  padding: 2px 0 0;
+}
+.mi-special-badge {
+  font-size: 0.65rem;
+  color: #7B1FA2;
+  font-weight: 700;
 }

@@ -245,7 +245,7 @@ function getServingConfig() {
   return { servingTimeMs, pitcherCap, refillTimeMs, patienceMs, dayDurationMs };
 }
 
-function calcTasteScore(recipe) {
+function calcTasteScore(recipe, variantId) {
   const eff = upgradeEffects();
   const w = WEATHER.find(item => item.id === S.currentWeather);
   const profile = getLocationTasteProfile(S.currentLocation);
@@ -272,30 +272,17 @@ function calcTasteScore(recipe) {
   if (S.upgrades.canopy && recipe.icePerCup > 0) score = Math.min(1, score + 0.05);
   if (S.upgrades.canopy && S.currentLocation === 'beach' && recipe.icePerCup >= 2) score = Math.min(1, score + 0.03);
 
-  // Special ingredient bonuses
-  const currentSeason = getSeason(S.day);
-  const ri = S.researchedIngredients || {};
-  let comboPartnerUsed = {};
-  Object.entries(SPECIAL_INGREDIENTS).forEach(([id, ing]) => {
-    const perCup = (recipe[id + 'PerCup'] || 0);
-    const tier   = ri[id] || 0;
-    if (perCup >= 1 && tier >= 1) {
-      let bonus = ing.tasteBonus;
-      if (ing.bestSeason === currentSeason) bonus *= 1.30;
-      if (ing.bestWeather.includes(S.currentWeather)) bonus *= 1.20;
-      if (tier >= 2) bonus *= 1.15;
+  // Variant taste bonus
+  if (variantId) {
+    const variant = MENU_VARIANTS.find(v => v.id === variantId);
+    if (variant && variant.tasteBonus > 0) {
+      let bonus = variant.tasteBonus;
+      const currentSeason = getSeason(S.day);
+      if (variant.bestSeason === currentSeason) bonus *= 1.30;
+      if (variant.bestWeather && variant.bestWeather.includes(S.currentWeather)) bonus *= 1.20;
       score = Math.min(1, score + bonus);
-      comboPartnerUsed[id] = true;
     }
-  });
-
-  // Artisan combo (tier 3): both partners ≥1 per cup
-  Object.entries(SPECIAL_INGREDIENTS).forEach(([id, ing]) => {
-    if ((ri[id] || 0) >= 3 && comboPartnerUsed[id] && comboPartnerUsed[ing.comboWith]) {
-      score = Math.min(1, score + ing.comboBonus);
-      if (S.artisanComboUsed === false) S.artisanComboUsed = true;
-    }
-  });
+  }
 
   return score;
 }
@@ -355,7 +342,7 @@ function calcDemand(recipe, price, tasteScore) {
     if (S.activeEvent.id === 'wintermarket' && (S.currentLocation === 'sidewalk' || S.currentLocation === 'park')) baseCust += 20;
   }
 
-  const raw = baseCust * weatherMult * priceSensitivity * repBonus * tasteBonus * tradeoff.demandMult * 0.92;
+  const raw = baseCust * weatherMult * priceSensitivity * repBonus * tasteBonus * tradeoff.demandMult * 1.8;
 
   return Math.max(0, Math.round(raw * eff.autoDispenser));
 }
@@ -370,13 +357,12 @@ function calcIngredientCost(recipe, cups) {
     recipe.icePerCup * eff.iceMult * p.ice +
     p.cups
   );
-  // Special ingredient costs
-  const ri = S.researchedIngredients || {};
+  // Special ingredient costs — use live market price if available
   Object.entries(SPECIAL_INGREDIENTS).forEach(([id, ing]) => {
     const perCup = recipe[id + 'PerCup'] || 0;
     if (perCup > 0) {
-      const discount = (ri[id] || 0) >= 2 ? 0.85 : 1.0;
-      raw += c * perCup * ing.marketPrice * discount;
+      const price = (S.marketPrices && S.marketPrices[id]) ? S.marketPrices[id] : ing.marketPrice;
+      raw += c * perCup * price;
     }
   });
   return roundMoney(raw);
@@ -384,7 +370,8 @@ function calcIngredientCost(recipe, cups) {
 
 function calcRepDelta(tasteScore, cupsSold, cupsToMake) {
   const eff = upgradeEffects();
-  const tradeoff = getTradeoffEffects(S.recipe, tasteScore, S.price);
+  const primarySlot = (S.menu || []).find(s => s && s.active) || (S.menu || [])[0] || {};
+  const tradeoff = getTradeoffEffects(primarySlot.recipe || {}, tasteScore, primarySlot.price || 1.75);
   let delta = 0;
 
   if (tasteScore >= 0.85) delta += 5;
@@ -399,41 +386,78 @@ function calcRepDelta(tasteScore, cupsSold, cupsToMake) {
 }
 
 function simulateSelling() {
-  const { recipe, price } = S;
-  const tasteScore = calcTasteScore(recipe);
-  const demand = calcDemand(recipe, price, tasteScore);
-  const cupsSold = Math.min(demand, recipe.cupsToMake);
-  const revenue = cupsSold * price;
-  const cost = calcIngredientCost(recipe, cupsSold);
+  const activeSlots = (S.menu || []).filter(s => s && s.active);
   const rent = LOCATIONS[S.currentLocation]?.rent || 0;
-  const maintenance = 0;
-  const profit = revenue - cost - rent;
-  const repDelta = calcRepDelta(tasteScore, cupsSold, recipe.cupsToMake);
-  return { tasteScore, demand, cupsSold, revenue, cost, rent, maintenance, profit, repDelta };
+
+  if (activeSlots.length === 0) {
+    return { items:[], totalRevenue:0, totalCost:0, rent, profit:-rent, totalSold:0, totalMake:0,
+             tasteScore:0, repDelta:-4, demand:0, revenue:0, cost:0, cupsSold:0, rx:{} };
+  }
+
+  // Per-slot taste scores
+  activeSlots.forEach(slot => { slot._taste = calcTasteScore(slot.recipe, slot.variantId); });
+
+  // Total demand: use avg price + best taste driving foot traffic
+  const avgPrice = activeSlots.reduce((s, m) => s + m.price, 0) / activeSlots.length;
+  const bestTaste = Math.max(...activeSlots.map(m => m._taste));
+  const totalDemand = calcDemand(activeSlots[0].recipe, avgPrice, bestTaste);
+
+  // Appeal = taste / price^0.2 → split demand proportionally
+  const appeals = activeSlots.map(slot => slot._taste / Math.pow(slot.price, 0.2));
+  const totalAppeal = appeals.reduce((s, a) => s + a, 0) || 1;
+
+  const items = activeSlots.map((slot, i) => {
+    const demand   = Math.round(totalDemand * appeals[i] / totalAppeal);
+    const cupsSold = Math.min(demand, slot.recipe.cupsToMake);
+    const revenue  = roundMoney(cupsSold * slot.price);
+    const cost     = calcIngredientCost(slot.recipe, cupsSold);
+    return { slot, tasteScore: slot._taste, demand, cupsSold, revenue, cost,
+             name: getMenuItemName(slot.recipe, slot.variantId), emoji: getMenuItemEmoji(slot.recipe, slot.variantId) };
+  });
+
+  const totalRevenue = roundMoney(items.reduce((s, m) => s + m.revenue, 0));
+  const totalCost    = roundMoney(items.reduce((s, m) => s + m.cost, 0));
+  const profit       = roundMoney(totalRevenue - totalCost - rent);
+  const totalSold    = items.reduce((s, m) => s + m.cupsSold, 0);
+  const totalMake    = activeSlots.reduce((s, slot) => s + slot.recipe.cupsToMake, 0);
+  const wtdTaste     = totalSold > 0
+    ? items.reduce((s, m) => s + m.tasteScore * m.cupsSold, 0) / totalSold
+    : bestTaste;
+  const repDelta = calcRepDelta(wtdTaste, totalSold, totalMake);
+
+  return { items, totalRevenue, totalCost, rent, profit, totalSold, totalMake,
+           tasteScore: wtdTaste, repDelta, demand: totalDemand,
+           revenue: totalRevenue, cost: totalCost, cupsSold: totalSold };
 }
 
 function applyDayResults(result) {
-  const { recipe } = S;
   const eff = upgradeEffects();
-  const served = result.cupsSold;
 
-  S.inventory.lemons = Math.max(0, S.inventory.lemons - served * recipe.lemonsPerCup * eff.lemonMult);
-  S.inventory.sugar = Math.max(0, S.inventory.sugar - served * recipe.sugarPerCup);
-  S.inventory.ice = Math.max(0, S.inventory.ice - served * recipe.icePerCup * eff.iceMult);
-  S.inventory.cups = Math.max(0, S.inventory.cups - served);
+  // Per-slot inventory deduction
+  (result.items || []).forEach(({ slot, cupsSold }) => {
+    const r = slot.recipe;
+    S.inventory.lemons = Math.max(0, S.inventory.lemons - cupsSold * r.lemonsPerCup * eff.lemonMult);
+    S.inventory.sugar  = Math.max(0, S.inventory.sugar  - cupsSold * r.sugarPerCup);
+    S.inventory.ice    = Math.max(0, S.inventory.ice    - cupsSold * r.icePerCup * eff.iceMult);
+    S.inventory.cups   = Math.max(0, S.inventory.cups   - cupsSold);
+    // Special ingredients (mint, strawberry, applecinnamon, honey)
+    Object.keys(SPECIAL_INGREDIENTS).forEach(id => {
+      const perCup = r[id + 'PerCup'] || 0;
+      if (perCup > 0) S.inventory[id] = Math.max(0, (S.inventory[id] || 0) - cupsSold * perCup);
+    });
+  });
   S.inventory.lemons = roundMoney(S.inventory.lemons);
-  S.inventory.ice = roundMoney(S.inventory.ice);
+  S.inventory.ice    = roundMoney(S.inventory.ice);
 
   const bonus = eff.franchiseIncome;
-
   S.coins += result.revenue - result.rent + bonus;
   S.totalProfit += result.profit;
   if (result.profit > S.bestDay) S.bestDay = result.profit;
-  S.allTimeCustomers += result.cupsSold;
+  S.allTimeCustomers += result.totalSold || result.cupsSold || 0;
 
   const adRepGain = getAdEffects().repGain;
   S.reputation = Math.max(0, Math.min(eff.maxRep, S.reputation + result.repDelta + adRepGain));
-  if (!S.locationRep) S.locationRep = { sidewalk: 50, park: 50, beach: 50, market: 50, festival: 50 };
+  if (!S.locationRep) S.locationRep = { sidewalk:50, park:50, beach:50, market:50, festival:50 };
   S.locationRep[S.currentLocation] = Math.max(0, Math.min(eff.maxRep,
     (S.locationRep[S.currentLocation] || 50) + result.repDelta + adRepGain));
 
@@ -443,20 +467,12 @@ function applyDayResults(result) {
   S.locationHistory.push(S.currentLocation);
   if (S.locationHistory.length > 7) S.locationHistory.shift();
 
-  // Deduct special ingredient inventory
-  if (!S.specialInventory) S.specialInventory = { mint:0, strawberry:0, applecinnamon:0, honey:0 };
-  Object.keys(SPECIAL_INGREDIENTS).forEach(id => {
-    const perCup = recipe[id + 'PerCup'] || 0;
-    if (perCup > 0) {
-      S.specialInventory[id] = Math.max(0, roundMoney(S.specialInventory[id] - served * perCup));
-    }
-  });
-
-  if (result.cupsSold >= recipe.cupsToMake) S.soldOutCount++;
+  const totalSold = result.totalSold || result.cupsSold || 0;
+  const totalMake = result.totalMake || totalSold;
+  if (totalSold >= totalMake && totalMake > 0) S.soldOutCount++;
   if (result.tasteScore >= 0.95) S.consecutiveLegendary++;
   else S.consecutiveLegendary = 0;
 
-  // Track seasonal profit for achievement
   if (result.profit > 0) {
     if (!S.seasonsProfit) S.seasonsProfit = { spring:false, summer:false, fall:false, winter:false };
     S.seasonsProfit[getSeason(S.day)] = true;
@@ -478,7 +494,6 @@ function advanceDay() {
   S.marketSpentToday = 0;
   S.hiredToday = {};
   S.adsToday = {};
-  S.artisanComboUsed = false;
 
   const newSeason = getSeason(S.day);
   const newYear   = getYear(S.day);
@@ -570,7 +585,7 @@ function checkAchievements(result) {
     { id: 'beach_bod', cond: S.currentLocation === 'beach' && result.cupsSold >= 50 },
     { id: 'price_master', cond: result.profit >= 20 },
     { id: 'century', cond: result.cupsSold >= 100 },
-    { id: 'heat_wave_king', cond: S.currentWeather === 'hot' && S.recipe.icePerCup >= 3 && result.profit > 0 },
+    { id: 'heat_wave_king', cond: S.currentWeather === 'hot' && (S.menu || []).some(s => s && s.active && (s.recipe.icePerCup || 0) >= 3) && result.profit > 0 },
     { id: 'first_upgrade', cond: Object.keys(S.upgrades).length >= 1 },
     { id: 'full_staff', cond: allStaff },
     { id: 'millionaire', cond: S.totalProfit >= 1000 },
@@ -580,7 +595,7 @@ function checkAchievements(result) {
     { id: 'grossophobe', cond: result.cupsSold >= 5 && (rx.gross || 0) === 0 },
     { id: 'reputation_max', cond: S.reputation >= 95 },
     { id: 'season_master', cond: S.seasonsProfit && Object.values(S.seasonsProfit).every(Boolean) },
-    { id: 'artisan', cond: S.artisanComboUsed && result.tasteScore >= 0.85 },
+    { id: 'artisan', cond: result.items && result.items.some(m => m.slot && m.slot.variantId === 'tropical') && result.tasteScore >= 0.85 },
     { id: 'year_two', cond: S.day >= 60 },
   ];
 

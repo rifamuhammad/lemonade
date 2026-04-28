@@ -3,24 +3,40 @@
 // â”€â”€ SELLING SCREEN â”€â”€
 function openStand() {
   SFX.dayOpen();
-  musicStart(); // begin background music when stand opens
-  const r = S.recipe;
+  musicStart();
 
-  // Auto-calculate cups from available inventory (respect upgrade multipliers)
+  const activeSlots = (S.menu || []).filter(s => s && s.active);
+  if (activeSlots.length === 0) {
+    showErrorToast('⚠️ No active drinks! Enable at least one drink on the Day screen.');
+    return;
+  }
+
+  // Cap cupsToMake at inventory max per slot (respect user's set value)
   const _eff = upgradeEffects();
-  const effLemons = r.lemonsPerCup * _eff.lemonMult;
-  const effIce    = r.icePerCup    * _eff.iceMult;
-  const maxLemons = effLemons > 0 ? Math.floor(S.inventory.lemons / effLemons) : 9999;
-  const maxSugar  = r.sugarPerCup > 0 ? Math.floor(S.inventory.sugar  / r.sugarPerCup) : 9999;
-  const maxIce    = effIce    > 0 ? Math.floor(S.inventory.ice    / effIce)    : 9999;
-  const maxCups   = Math.min(maxLemons, maxSugar, maxIce, S.inventory.cups);
-  S.recipe.cupsToMake = Math.max(0, maxCups);
+  let totalPossible = 0;
+  activeSlots.forEach(slot => {
+    const r = slot.recipe;
+    const effLemons = r.lemonsPerCup * _eff.lemonMult;
+    const effIce    = r.icePerCup    * _eff.iceMult;
+    const maxLemons = effLemons   > 0 ? Math.floor(S.inventory.lemons / effLemons) : 9999;
+    const maxSugar  = r.sugarPerCup > 0 ? Math.floor(S.inventory.sugar  / r.sugarPerCup) : 9999;
+    const maxIce    = effIce      > 0 ? Math.floor(S.inventory.ice    / effIce)    : 9999;
+    // Special ingredient limits
+    let maxSpecial = 9999;
+    Object.keys(SPECIAL_INGREDIENTS).forEach(id => {
+      const perCup = r[id + 'PerCup'] || 0;
+      if (perCup > 0) maxSpecial = Math.min(maxSpecial, Math.floor((S.inventory[id] || 0) / perCup));
+    });
+    const maxCups = Math.min(maxLemons, maxSugar, maxIce, S.inventory.cups, maxSpecial);
+    // Auto-calculate from stock — divide inventory equally across active slots
+    slot.recipe.cupsToMake = Math.max(0, Math.floor(maxCups / activeSlots.length));
+    totalPossible += slot.recipe.cupsToMake;
+  });
 
-  // Warn but never block
-  if (maxCups <= 0) {
+  if (totalPossible <= 0) {
     showErrorToast('⚠️ Empty inventory — you\'ll open but sell nothing! Visit Market 🛒 first!');
-  } else if (maxCups < 5) {
-    showErrorToast(`⚠️ Low stock — only ${maxCups} cup${maxCups !== 1 ? 's' : ''} possible today`);
+  } else if (totalPossible < 5) {
+    showErrorToast(`⚠️ Low stock — only ${totalPossible} cup${totalPossible !== 1 ? 's' : ''} possible today`);
   }
 
   const result = simulateSelling();
@@ -895,9 +911,12 @@ function _buildScene(ids) {
   // Stand SVG
   document.getElementById(ids.stand).innerHTML = buildStandSVG();
 
-  // Price tag
+  // Price tag — show first active slot's price
   const ptag = document.getElementById(ids.ptag);
-  if (ptag) ptag.textContent = fmt(S.price);
+  if (ptag) {
+    const _ps = (S.menu || []).find(s => s && s.active) || (S.menu || [])[0];
+    if (_ps) ptag.textContent = fmt(_ps.price);
+  }
 
   // Background elements
   const bgEl    = document.getElementById(ids.bg);
@@ -1135,6 +1154,8 @@ function skipSellingDay() {
   if (!soldOut) return;
 
   clearTimeout(ss._spawnTimer);
+  (ss._spawnTimers || []).forEach(t => clearTimeout(t));
+  ss._spawnTimers = [];
   clearTimeout(ss._dayTimer);
 
   const skippedVisitors = _countRemainingVisitors(ss);
@@ -1233,7 +1254,7 @@ function _tryServe(ss) {
     ss.actualServed++;
     ss.pitcherRemaining--;
     document.getElementById('live-cups-sold').textContent = ss.actualServed;
-    document.getElementById('live-revenue').textContent   = fmt(ss.actualServed * S.price);
+    document.getElementById('live-revenue').textContent   = fmt(ss.actualServed * ss.avgPrice);
     updateSellLiveInv(ss);
     updatePitcherUI(ss, ss.cfg);
 
@@ -1332,10 +1353,9 @@ function _spawnCustomer(ss) {
     }
 
     // Price walk-by: location-aware pricey threshold
-    // Wealthier spots (beach, market) tolerate higher prices before customers turn away
     const priceyThresh = LOCATION_PRICEY_THRESH[S.currentLocation] || 2.0;
-    if (S.price > priceyThresh) {
-      const overFactor = Math.min(1, (S.price - priceyThresh) / (priceyThresh * 0.5));
+    if (ss.avgPrice > priceyThresh) {
+      const overFactor = Math.min(1, (ss.avgPrice - priceyThresh) / (priceyThresh * 0.5));
       if (Math.random() < overFactor * 0.75) {
         ss.priceyCount = (ss.priceyCount || 0) + 1;
         ss.rx.pricey++;
@@ -1390,9 +1410,18 @@ function renderSelling(preResult) {
   document.getElementById('soldout-overlay').classList.remove('show');
 
   // Build simulation state
+  // For multi-drink: compute avg price and total cupsToMake across active slots
+  const _activeSlots = (S.menu || []).filter(s => s && s.active);
+  const _avgPrice = _activeSlots.length > 0
+    ? _activeSlots.reduce((s, m) => s + m.price, 0) / _activeSlots.length
+    : ((S.menu || [])[0] || { price: 1.75 }).price;
+  const _primaryRecipe = _activeSlots.length > 0 ? _activeSlots[0].recipe : ((S.menu || [])[0] || {}).recipe || {};
+
   const ss = {
     demand:           preResult.demand,
-    cupsToMake:       S.recipe.cupsToMake,
+    cupsToMake:       preResult.totalMake || preResult.cupsSold || 0,
+    avgPrice:         _avgPrice,
+    primaryRecipe:    _primaryRecipe,
     actualServed:     0,
     disappointed:     0,
     priceyCount:      0,
@@ -1416,6 +1445,7 @@ function renderSelling(preResult) {
     },
     _dayTimer:        null,
     _spawnTimer:      null,
+    _spawnTimers:     [],
     _speedMult:       1,
     _dayStartWall:    Date.now(),
     _dayElapsedGame:  0,
@@ -1437,23 +1467,22 @@ function renderSelling(preResult) {
   updateSellLiveInv(ss);
   startDayProgressBar(cfg.dayDurationMs);
 
-  // Spawn customers over the day
-  let spawnCount = 0;
-  const avgInterval = cfg.dayDurationMs / Math.max(1, ss.demand * 1.35 + 1);
-
-  function doSpawn() {
-    if (ss.dayOver || spawnCount >= ss.demand) return;
-    spawnCount++;
-    ss.spawnedCount = spawnCount;
-    _spawnCustomer(ss);
-    if (spawnCount < ss.demand) {
-      const jitter = avgInterval * (0.45 + Math.random() * 0.5) / _speedMult;
-      ss._spawnTimer = setTimeout(doSpawn, jitter);
-    }
-  }
-
+  // Pre-schedule all customer spawn times spread evenly across the full day
+  // (5% → 92% of day duration) with per-slot jitter so it never front-loads
   if (ss.demand > 0) {
-    ss._spawnTimer = setTimeout(doSpawn, 250);
+    if (!ss._spawnTimers) ss._spawnTimers = [];
+    const n = ss.demand;
+    for (let i = 0; i < n; i++) {
+      const base   = cfg.dayDurationMs * (0.05 + 0.87 * (i / Math.max(1, n - 1)));
+      const window = cfg.dayDurationMs * 0.87 / Math.max(1, n);
+      const jitter = window * (Math.random() - 0.5) * 0.7;
+      const t      = Math.max(200, (base + jitter) / _speedMult);
+      ss._spawnTimers.push(setTimeout(() => {
+        if (ss.dayOver) return;
+        ss.spawnedCount = (ss.spawnedCount || 0) + 1;
+        _spawnCustomer(ss);
+      }, t));
+    }
   } else {
     document.getElementById('selling-title-hud').textContent = 'Slow day...';
     document.getElementById('selling-status').textContent    = 'No customers today 😢';
@@ -1464,13 +1493,13 @@ function renderSelling(preResult) {
 }
 
 function updateSellLiveInv(ss) {
-  const r = S.recipe;
+  const r = ss.primaryRecipe || {};
   const eff = upgradeEffects();
   if (ss.actualServed > 0) {
-    ss.liveInv.lemons = Math.max(0, S.inventory.lemons - ss.actualServed * r.lemonsPerCup * eff.lemonMult);
-    ss.liveInv.sugar  = Math.max(0, S.inventory.sugar  - ss.actualServed * r.sugarPerCup);
+    ss.liveInv.lemons = Math.max(0, S.inventory.lemons - ss.actualServed * (r.lemonsPerCup || 2) * eff.lemonMult);
+    ss.liveInv.sugar  = Math.max(0, S.inventory.sugar  - ss.actualServed * (r.sugarPerCup  || 2));
     ss.liveInv.cups   = Math.max(0, S.inventory.cups   - ss.actualServed);
-    ss.liveInv.ice    = Math.max(0, S.inventory.ice    - ss.actualServed * r.icePerCup    * eff.iceMult);
+    ss.liveInv.ice    = Math.max(0, S.inventory.ice    - ss.actualServed * (r.icePerCup    || 1) * eff.iceMult);
   }
   const strip = document.getElementById('sell-inv-strip');
   if (!strip) return;
@@ -1548,19 +1577,32 @@ function _endSellingDay(ss, options = {}) {
   // Build actual result from real simulation
   const pr = ss.preResult;
   const rent = LOCATIONS[S.currentLocation]?.rent || 0;
-  const revenue = ss.actualServed * S.price;
+  // Scale preResult proportionally based on actual vs expected served
+  const preExpected = pr.totalSold || pr.cupsSold || 1;
+  const scaleFactor = preExpected > 0 ? ss.actualServed / preExpected : 1;
+  const revenue = roundMoney(pr.totalRevenue * scaleFactor);
+  const cost    = roundMoney(pr.totalCost    * scaleFactor);
+  const items   = (pr.items || []).map(m => ({
+    ...m,
+    cupsSold: Math.round(m.cupsSold * scaleFactor),
+    revenue:  roundMoney(m.revenue  * scaleFactor),
+    cost:     roundMoney(m.cost     * scaleFactor),
+  }));
   // Extra rep penalties from customer expressions
   const priceyPenalty = Math.floor((ss.priceyCount || 0) / 3);
   const yuckPenalty   = Math.floor((ss.yuckServed  || 0) / 2);
   const baseRepDelta  = calcRepDelta(pr.tasteScore, ss.actualServed, ss.cupsToMake);
-  // Cost of goods sold = only what was actually served (not pre-planned cupsToMake)
-  const cost = calcIngredientCost(S.recipe, ss.actualServed);
   // Ad spend was already deducted from coins when hired - include here for display only
   const adSpend = ADS.reduce((sum, ad) => sum + (S.adsToday[ad.id] ? ad.cost : 0), 0);
   const actualResult = {
     ...pr,
-    cupsSold: ss.actualServed,
+    items,
+    totalSold:    ss.actualServed,
+    totalMake:    ss.cupsToMake,
+    cupsSold:     ss.actualServed,
     revenue,
+    totalRevenue: revenue,
+    totalCost:    cost,
     rent,
     cost,
     adSpend,
@@ -1580,7 +1622,7 @@ function finishSelling(result) {
   const coinsBefore = S.coins;
   applyDayResults(result);
 
-  const soldOut = result.cupsSold >= S.recipe.cupsToMake && S.recipe.cupsToMake > 0;
+  const soldOut = result.cupsSold >= (result.totalMake || result.cupsSold) && (result.totalMake || 0) > 0;
   if (soldOut) {
     SFX.soldOut();
     setTimeout(() => spawnConfetti(32), 200);
@@ -1619,7 +1661,9 @@ function renderResult(result = S.dayResult) {
   document.getElementById('result-stars').textContent = tl.stars;
   document.getElementById('result-taste-lbl').textContent = tl.label;
 
-  document.getElementById('result-cups-sold').textContent = result.cupsSold + ' / ' + S.recipe.cupsToMake;
+  const totalSold = result.totalSold !== undefined ? result.totalSold : result.cupsSold;
+  const totalMake = result.totalMake !== undefined ? result.totalMake : totalSold;
+  document.getElementById('result-cups-sold').textContent = totalSold + ' / ' + totalMake;
   document.getElementById('result-revenue').textContent = fmt(result.revenue);
   document.getElementById('result-cost').textContent = fmt(result.cost);
   const rentRow = document.getElementById('result-rent-row');
@@ -1664,6 +1708,26 @@ function renderResult(result = S.dayResult) {
     document.getElementById('result-event-text').textContent = '🏆 Franchise stand earned ' + fmt(S.franchiseIncome) + ' passive income!';
   } else {
     bonusCard.style.display = 'none';
+  }
+
+  // Per-drink breakdown (shown when 2+ active drinks)
+  let drinkBreakdown = document.getElementById('result-drinks-breakdown');
+  const items = result.items || [];
+  if (items.length > 1) {
+    if (!drinkBreakdown) {
+      drinkBreakdown = document.createElement('div');
+      drinkBreakdown.id = 'result-drinks-breakdown';
+      drinkBreakdown.className = 'card result-drinks-breakdown';
+      bonusCard.parentNode.insertBefore(drinkBreakdown, bonusCard);
+    }
+    drinkBreakdown.innerHTML = `<div class="card-title" style="margin-bottom:6px">🍹 Drink Breakdown</div>` +
+      items.map(m => `<div class="rdb-row">
+        <span>${m.emoji} ${m.name}</span>
+        <span>×${m.cupsSold} · ${fmt(m.revenue)}</span>
+      </div>`).join('');
+    drinkBreakdown.style.display = '';
+  } else if (drinkBreakdown) {
+    drinkBreakdown.style.display = 'none';
   }
 
   document.getElementById('next-day-num').textContent = S.day + 1;

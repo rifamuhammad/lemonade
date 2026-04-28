@@ -49,7 +49,7 @@
 
       <!-- COMPACT INFO HUD -->
       <div id="day-hud">
-        <!-- Row 1: Weather + Event -->
+        <!-- Row 1: Weather + Event (season label embedded in weather pill) -->
         <div class="day-hud-row">
           <span id="day-weather-pill">☀️ Sunny · ×1.0</span>
           <span id="day-event-pill"></span>
@@ -73,49 +73,8 @@
 
         <button id="open-stand-btn">🍋 Open Lemonade Stand!</button>
 
-        <div class="card" id="recipe-card">
-          <div class="card-title">🍋 Recipe <span style="font-size:0.7rem;font-weight:400;color:var(--gray)">(per cup · ideal changes with weather)</span></div>
-          <div class="ing-row">
-            <span class="ing-icon">🍋</span>
-            <span class="ing-name">Lemons</span>
-            <div class="stepper-group">
-              <button class="step-btn" data-key="lemonsPerCup" data-dir="-1" data-min="1" data-max="4" data-step="1">-</button>
-              <span class="step-val" id="sv-lemons">2</span>
-              <button class="step-btn" data-key="lemonsPerCup" data-dir="1" data-min="1" data-max="4" data-step="1">+</button>
-            </div>
-          </div>
-          <div class="ing-row">
-            <span class="ing-icon">🍬</span>
-            <span class="ing-name">Sugar</span>
-            <div class="stepper-group">
-              <button class="step-btn" data-key="sugarPerCup" data-dir="-1" data-min="1" data-max="4" data-step="1">-</button>
-              <span class="step-val" id="sv-sugar">2</span>
-              <button class="step-btn" data-key="sugarPerCup" data-dir="1" data-min="1" data-max="4" data-step="1">+</button>
-            </div>
-          </div>
-          <div class="ing-row">
-            <span class="ing-icon">🧊</span>
-            <span class="ing-name">Ice</span>
-            <div class="stepper-group">
-              <button class="step-btn" data-key="icePerCup" data-dir="-1" data-min="0" data-max="3" data-step="1">-</button>
-              <span class="step-val" id="sv-ice">1</span>
-              <button class="step-btn" data-key="icePerCup" data-dir="1" data-min="0" data-max="3" data-step="1">+</button>
-            </div>
-          </div>
-          <div id="cost-per-cup-row">
-            <span id="cost-per-cup-lbl">Cost per cup:</span>
-            <span id="cost-per-cup-val">—</span>
-          </div>
-        </div>
-
-        <div class="card" id="price-card">
-          <div class="card-title">💰 Price per Cup</div>
-          <div class="price-row">
-            <span id="price-val">$0.75</span>
-            <input type="range" id="sl-price" min="0.50" max="10.00" value="2.00" step="0.25" style="flex:1">
-          </div>
-          <div id="price-hint" style="font-size:0.75rem;color:var(--gray);margin-top:4px;"></div>
-        </div>
+        <div id="menu-tab-bar"></div>
+        <div id="menu-card"></div>
 
         <div class="card">
           <div class="card-title">📍 Location</div>
@@ -287,29 +246,34 @@
     </section>
 
     <!-- MARKET SCREEN -->
-    <section id="screen-market" class="screen">
-      <div class="market-summary">
-        <div class="market-summary-item">
-          <span class="ms-val" id="ms-budget">$0.00</span>
-          <span class="ms-lbl">Budget</span>
+    <section id="screen-market" class="screen market-screen-layout">
+      <!-- Sticky top: inventory + budget -->
+      <div id="market-sticky-top">
+        <div id="market-inv-bar">
+          <div id="market-inv-grid"></div>
         </div>
-        <div class="market-summary-item">
-          <span class="ms-val" id="ms-spent">$0.00</span>
-          <span class="ms-lbl">Spent Today</span>
-        </div>
-        <div class="market-summary-item">
-          <span class="ms-val" id="ms-remaining">$0.00</span>
-          <span class="ms-lbl">Remaining</span>
+        <div id="market-budget-bar">
+          <span id="ms-budget-lbl">Budget: <strong id="ms-budget">$0.00</strong></span>
+          <span id="ms-spent-lbl">Spent: <strong id="ms-spent">$0.00</strong></span>
         </div>
       </div>
 
-      <div class="section-label">📦 Current Inventory</div>
-      <div class="card">
-        <div class="inv-grid" id="market-inv-grid"></div>
+      <!-- Scrollable items list -->
+      <div id="market-scroll-area">
+        <div class="section-label">🛒 Buy Ingredients</div>
+        <div id="market-items-list"></div>
       </div>
 
-      <div class="section-label">🛒 Buy Ingredients</div>
-      <div id="market-items-list"></div>
+      <!-- Sticky bottom: cart summary + checkout -->
+      <div id="market-cart-footer">
+        <div id="cart-summary-line">
+          <span id="cart-summary-text">Cart is empty</span>
+        </div>
+        <div id="cart-checkout-row">
+          <span id="cart-total-display">Total: $0.00</span>
+          <button id="cart-buy-btn" class="btn-primary" disabled>Buy All</button>
+        </div>
+      </div>
     </section>
 
     <!-- SHOP SCREEN -->
@@ -319,7 +283,7 @@
         <button class="shop-tab" data-tab="ads">📣 Ads</button>
         <button class="shop-tab" data-tab="staff">👷 Staff</button>
         <button class="shop-tab" data-tab="stand">🏪 Stand</button>
-        <button class="shop-tab" data-tab="lab">🧪 Lab</button>
+        <button class="shop-tab" data-tab="menu">🍹 Menu</button>
       </div>
       <div id="shop-upgrades"></div>
     </section>
