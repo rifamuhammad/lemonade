@@ -429,16 +429,13 @@ function renderMenuCard(slotIdx) {
 
 function renderLocationPicker() {
   const grid = document.getElementById('location-grid');
-  const festivalAvail = S.activeEvent && S.activeEvent.id === 'festival';
   grid.innerHTML = Object.entries(LOCATIONS).map(([key, loc]) => {
-    const isEvent  = loc.eventOnly && !festivalAvail;
-    const disabled = isEvent;
-    const selected = S.currentLocation === key;
-    const infoText = loc.eventOnly
-      ? (festivalAvail ? '🎪 Active today!' : '🔒 Event only')
-      : (loc.rent > 0 ? `${loc.customers} customers · $${loc.rent} rent` : `${loc.customers} customers · Free`);
-    return `<button class="loc-btn ${selected ? 'selected' : ''} ${disabled ? 'locked' : ''}"
-      data-loc="${key}" ${disabled ? 'disabled' : ''}>
+    const selected  = S.currentLocation === key;
+    const infoText  = loc.rent > 0
+      ? `${loc.customers} customers · $${loc.rent} rent`
+      : `${loc.customers} customers · Free`;
+    return `<button class="loc-btn ${selected ? 'selected' : ''}"
+      data-loc="${key}">
       <span class="loc-emoji">${loc.emoji}</span>
       <span class="loc-name">${loc.name}</span>
       <span class="loc-info">${infoText}</span>

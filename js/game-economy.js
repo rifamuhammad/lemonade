@@ -342,7 +342,7 @@ function calcDemand(recipe, price, tasteScore) {
     if (S.activeEvent.id === 'wintermarket' && (S.currentLocation === 'sidewalk' || S.currentLocation === 'park')) baseCust += 20;
   }
 
-  const raw = baseCust * weatherMult * priceSensitivity * repBonus * tasteBonus * tradeoff.demandMult * 1.8;
+  const raw = baseCust * weatherMult * priceSensitivity * repBonus * tasteBonus * tradeoff.demandMult * 2.2;
 
   return Math.max(0, Math.round(raw * eff.autoDispenser));
 }
@@ -457,7 +457,7 @@ function applyDayResults(result) {
 
   const adRepGain = getAdEffects().repGain;
   S.reputation = Math.max(0, Math.min(eff.maxRep, S.reputation + result.repDelta + adRepGain));
-  if (!S.locationRep) S.locationRep = { sidewalk:50, park:50, beach:50, market:50, festival:50 };
+  if (!S.locationRep) S.locationRep = { sidewalk:50, park:50, beach:50, market:50, festival:50, airport:50 };
   S.locationRep[S.currentLocation] = Math.max(0, Math.min(eff.maxRep,
     (S.locationRep[S.currentLocation] || 50) + result.repDelta + adRepGain));
 

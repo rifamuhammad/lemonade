@@ -9,7 +9,8 @@ const LOCATIONS = {
   park:     { name: 'Park',            emoji: '🌳', customers: 50,  rent: 5,  iceBonus: false },
   beach:    { name: 'Beach',           emoji: '🏖️', customers: 70,  rent: 12, iceBonus: true  },
   market:   { name: 'Market Square',   emoji: '🏪', customers: 95,  rent: 20, iceBonus: false },
-  festival: { name: 'Festival Grounds',emoji: '🎪', customers: 140, rent: 35, iceBonus: false, eventOnly: true },
+  festival: { name: 'Festival Grounds',emoji: '🎪', customers: 140, rent: 35, iceBonus: false },
+  airport:  { name: 'Airport Terminal',emoji: '✈️', customers: 180, rent: 55, iceBonus: false },
 };
 // Price above which customers start walking away (location-specific - wealthier spots tolerate higher prices)
 const LOCATION_TASTE_PROFILES = {
@@ -75,8 +76,8 @@ const UPGRADE_MAINTENANCE = {
 
 const STAND_TIER_MAINTENANCE = [0, 0.50, 1.50, 4.00];
 
-// Per-unit prices match small bundle rates (lemons 12/$1.00, sugar 12/$0.75, ice 50/$1.00, cups 75/$1.00)
-const INGREDIENT_BASE = { lemons: 0.083, sugar: 0.063, ice: 0.02, cups: 0.013, mint: 0.30, strawberry: 0.60, applecinnamon: 0.45, honey: 0.80 };
+// Per-unit prices match small bundle rates
+const INGREDIENT_BASE = { lemons: 0.10, sugar: 0.08, ice: 0.025, cups: 0.015, mint: 0.35, strawberry: 0.70, applecinnamon: 0.50, honey: 0.90 };
 const INGREDIENT_INFO = {
   lemons:        { name: 'Lemons',        emoji: '🍋', unit: 'each',    desc: 'Fresh lemons for your recipe' },
   sugar:         { name: 'Sugar',         emoji: '🍬', unit: 'portion', desc: 'Sweetens the lemonade' },
@@ -92,14 +93,14 @@ const MENU_SLOT_COSTS = [300, 700, 1500]; // unlock slots 2, 3, 4
 // Bulk buying bundles (qty, total cost)
 const MARKET_BUNDLES = {
   lemons: [
-    { qty:12,  cost:1.00, label:'Small',  save:null      },
-    { qty:24,  cost:1.75, label:'Medium', save:null      },
-    { qty:48,  cost:3.00, label:'Large',  save:null      },
+    { qty:15,  cost:1.50, label:'Small',  save:null },
+    { qty:30,  cost:2.75, label:'Medium', save:null },
+    { qty:50,  cost:4.25, label:'Large',  save:null },
   ],
   sugar:  [
-    { qty:12,  cost:0.75, label:'Small',  save:null      },
-    { qty:20,  cost:1.10, label:'Medium', save:null      },
-    { qty:50,  cost:2.50, label:'Large',  save:null      },
+    { qty:15,  cost:1.20, label:'Small',  save:null },
+    { qty:30,  cost:2.25, label:'Medium', save:null },
+    { qty:50,  cost:3.50, label:'Large',  save:null },
   ],
   ice:    [
     { qty:50,  cost:1.00, label:'Small',  save:null      },
@@ -139,7 +140,7 @@ const UPGRADES = [
   { id:'canopy',      name:'ShadeMaker 3000 Canopy',    cost:130,  emoji:'⛱️', desc:'Keep your customers cool. +20% customers on hot & warm days, slight taste bonus with ice' },
   { id:'powerjuicer', name:'Miracle 9000 Power Juicer', cost:150,  emoji:'⚡', desc:'Refill pitchers at lightning fast speed! Refill time cut by 3x' },
   { id:'register',    name:'EZserve Cash Register',     cost:250,  emoji:'💳', desc:'Speed up your serving process! Serve each customer 40% faster' },
-  { id:'fridge',      name:'Mr. Fridge',                cost:250,  emoji:'❄️', desc:'Never waste money on spoiled lemons again! Ice never melts overnight' },
+  { id:'fridge',      name:'Mr. Fridge',                cost:100,  emoji:'❄️', desc:'Never waste money on spoiled lemons again! Ice never melts overnight' },
   { id:'iceomatic',   name:'Ice-O-Matic Dispenser',     cost:400,  emoji:'🧊', desc:'Tired of wasting money on ice cubes? Uses 50% less ice per cup' },
   { id:'soundsystem', name:'High-Five Sound System',    cost:800,  emoji:'🎵', desc:'Have the grooviest music around. +15 customers, they wait 50% longer in line' },
   { id:'neon',        name:'Bright Lights Neon System', cost:1250, emoji:'💡', desc:'Grab their attention from blocks away. +20% customers, +3 reputation per day' },
@@ -154,11 +155,11 @@ const EMPLOYEES = [
 ];
 // Advertising tiers - one-time purchase, only best owned is active
 const ADS = [
-  { id:'ad_flyer',     name:'Paper Flyers',    emoji:'📄', cost:30,   custBonus:4,  repGain:1, desc:'+4 customers/day, +1 rep - hand-written flyers' },
-  { id:'ad_radio',     name:'Radio Spot',      emoji:'📻', cost:200,  custBonus:12, repGain:2, desc:'+12 customers/day, +2 rep - local radio jingle' },
-  { id:'ad_newspaper', name:'Newspaper Ad',    emoji:'📰', cost:420,  custBonus:22, repGain:3, desc:'+22 customers/day, +3 rep - Sunday classifieds' },
-  { id:'ad_tv',        name:'TV Commercial',   emoji:'📺', cost:950,  custBonus:38, repGain:5, desc:'+38 customers/day, +5 rep - primetime slot!' },
-  { id:'ad_blimp',     name:'Blimp Ad',        emoji:'🎈', cost:2500, custBonus:60, repGain:8, desc:'+60 customers/day, +8 rep - everyone sees it!' },
+  { id:'ad_flyer',     name:'Paper Flyers',    emoji:'📄', cost:5,    custBonus:15, repGain:2, desc:'+15 customers/day, +2 rep - hand-written flyers around town' },
+  { id:'ad_radio',     name:'Radio Spot',      emoji:'📻', cost:10,   custBonus:30, repGain:4, desc:'+30 customers/day, +4 rep - local radio jingle' },
+  { id:'ad_newspaper', name:'Newspaper Ad',    emoji:'📰', cost:20,   custBonus:50, repGain:6, desc:'+50 customers/day, +6 rep - Sunday classifieds' },
+  { id:'ad_tv',        name:'TV Commercial',   emoji:'📺', cost:50,   custBonus:80, repGain:9, desc:'+80 customers/day, +9 rep - primetime slot!' },
+  { id:'ad_blimp',     name:'Blimp Ad',        emoji:'🎈', cost:100,  custBonus:130,repGain:12,desc:'+130 customers/day, +12 rep - everyone sees it!' },
 ];
 const ACHIEVEMENTS_DEF = [
   // -- Early game ----------------------------
@@ -251,31 +252,31 @@ const MENU_VARIANTS = [
     recipe:{ lemonsPerCup:2, sugarPerCup:2, icePerCup:1 },
     tasteBonus:0,    bestSeason:null,     bestWeather:[],
     hint:'The timeless original — beloved everywhere.' },
-  { id:'mint',          name:'Mint Lemonade',        emoji:'🌿',  cost:250,  suggestedPrice:2.25,
+  { id:'mint',          name:'Mint Lemonade',        emoji:'🌿',  cost:100,  suggestedPrice:2.25,
     recipe:{ lemonsPerCup:2, sugarPerCup:2, icePerCup:2, mintPerCup:1 },
     tasteBonus:0.08, bestSeason:'spring', bestWeather:['cloudy','rainy'],
     hint:'Cool and refreshing. Shines on spring days.' },
-  { id:'pink',          name:'Pink Lemonade',        emoji:'🌸',  cost:300,  suggestedPrice:2.25,
+  { id:'pink',          name:'Pink Lemonade',        emoji:'🌸',  cost:150,  suggestedPrice:2.25,
     recipe:{ lemonsPerCup:2, sugarPerCup:3, icePerCup:1, strawberryPerCup:1 },
     tasteBonus:0.08, bestSeason:'summer', bestWeather:['hot','warm'],
     hint:'Sweet and photogenic. Tourists love it.' },
-  { id:'sparkling',     name:'Sparkling Lemonade',   emoji:'🫧',  cost:400,  suggestedPrice:2.50,
+  { id:'sparkling',     name:'Sparkling Lemonade',   emoji:'🫧',  cost:200,  suggestedPrice:2.50,
     recipe:{ lemonsPerCup:3, sugarPerCup:2, icePerCup:2 },
     tasteBonus:0.07, bestSeason:null,     bestWeather:['hot','warm'],
     hint:'Premium and bubbly. Commands higher prices.' },
-  { id:'strawberry',    name:'Strawberry Lemonade',  emoji:'🍓',  cost:500,  suggestedPrice:2.75,
+  { id:'strawberry',    name:'Strawberry Lemonade',  emoji:'🍓',  cost:250,  suggestedPrice:2.75,
     recipe:{ lemonsPerCup:2, sugarPerCup:2, icePerCup:2, strawberryPerCup:1 },
     tasteBonus:0.09, bestSeason:'summer', bestWeather:['hot','warm'],
     hint:'Summer blockbuster. Tourists go wild for it.' },
-  { id:'applecinnamon', name:'Apple Cinnamon',       emoji:'🍎',  cost:600,  suggestedPrice:2.75,
+  { id:'applecinnamon', name:'Apple Cinnamon',       emoji:'🍎',  cost:300,  suggestedPrice:2.75,
     recipe:{ lemonsPerCup:2, sugarPerCup:2, icePerCup:0, applecinnamonPerCup:1 },
     tasteBonus:0.10, bestSeason:'fall',   bestWeather:['cloudy','rainy'],
     hint:'Warm and spiced. Fall comfort seekers adore it.' },
-  { id:'honey',         name:'Honey Lemonade',       emoji:'🍯',  cost:700,  suggestedPrice:3.00,
+  { id:'honey',         name:'Honey Lemonade',       emoji:'🍯',  cost:400,  suggestedPrice:3.00,
     recipe:{ lemonsPerCup:3, sugarPerCup:1, icePerCup:0, honeyPerCup:1 },
     tasteBonus:0.12, bestSeason:'winter', bestWeather:['cloudy','rainy'],
     hint:'Soothing and premium. Winter crowds love it.' },
-  { id:'tropical',      name:'Tropical Mix',         emoji:'🌴',  cost:1000, suggestedPrice:3.50,
+  { id:'tropical',      name:'Tropical Mix',         emoji:'🌴',  cost:500,  suggestedPrice:3.50,
     recipe:{ lemonsPerCup:2, sugarPerCup:2, icePerCup:2, mintPerCup:1, strawberryPerCup:1 },
     tasteBonus:0.15, bestSeason:'summer', bestWeather:['hot','warm'],
     hint:'The ultimate summer special. Commands premium prices.' },
