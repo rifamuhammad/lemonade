@@ -888,8 +888,9 @@ function getSceneConfig() {
     sidewalk: { fill:'linear-gradient(180deg,#9E9E9E,#787878)', path:'linear-gradient(180deg,#BDBDBD,#9E9E9E)' },
     park:     { fill:'linear-gradient(180deg,#66BB6A,#388E3C)', path:'linear-gradient(180deg,#AED6A0,#8FBF86)' },
     beach:    { fill:'linear-gradient(180deg,#F4D03F,#D4AC0D)', path:'linear-gradient(180deg,#FAE5A0,#F0D060)' },
-    market:   { fill:'linear-gradient(180deg,#9E9E9E,#616161)', path:'linear-gradient(180deg,#E0E0E0,#BDBDBD)' },
+    market:   { fill:'linear-gradient(180deg,#78909C,#546E7A)', path:'linear-gradient(180deg,#CFD8DC,#B0BEC5)' },
     festival: { fill:'linear-gradient(180deg,#81C784,#4CAF50)', path:'linear-gradient(180deg,#C8E6C9,#A5D6A7)' },
+    airport:  { fill:'linear-gradient(180deg,#607D8B,#455A64)', path:'linear-gradient(180deg,#CFD8DC,#90A4AE)' },
   };
 
   return { sky: skies[w.id] || skies.sunny, ground: grounds[loc] || grounds.sidewalk, weather: w, loc };
@@ -949,7 +950,7 @@ function _buildScene(ids) {
       s.textContent = '@keyframes waveRock{from{transform:scaleX(1)}to{transform:scaleX(1.04)}}';
       document.head.appendChild(s);
     }
-  } else if (loc === 'sidewalk' || loc === 'market') {
+  } else if (loc === 'sidewalk') {
     [[8,75,50,'#9E9E9E'],[65,60,40,'#8D8D8D'],[110,80,45,'#AEAEAE'],[160,65,42,'#919191']].forEach(([x,h,w,c]) => {
       const b = document.createElement('div');
       b.className = 'bg-building';
@@ -964,6 +965,134 @@ function _buildScene(ids) {
       }
       bgEl.appendChild(b);
     });
+  } else if (loc === 'market') {
+    // Market Square — colourful shopfronts with awnings
+    const shops = [
+      { x:4,  h:72, w:52, wall:'#E8D5B7', awning:'#E53935', label:'🥐' },
+      { x:60, h:62, w:44, wall:'#B3D9FF', awning:'#1565C0', label:'📚' },
+      { x:108,h:78, w:50, wall:'#C8E6C9', awning:'#2E7D32', label:'🌿' },
+      { x:162,h:66, w:46, wall:'#F8BBD9', awning:'#AD1457', label:'🎀' },
+    ];
+    shops.forEach(({ x, h, w, wall, awning, label }) => {
+      const b = document.createElement('div');
+      b.style.cssText = `position:absolute;left:${x}px;bottom:0;width:${w}px;height:${h}px;background:${wall};border:1.5px solid rgba(0,0,0,0.12);border-radius:4px 4px 0 0;`;
+      // windows
+      for (let wy = 14; wy < h - 20; wy += 20) {
+        for (let wx = 6; wx < w - 10; wx += 16) {
+          const win = document.createElement('div');
+          win.style.cssText = `position:absolute;left:${wx}px;top:${wy}px;width:9px;height:11px;background:#AEE0F7;border:1px solid rgba(0,0,0,0.15);border-radius:1px;`;
+          b.appendChild(win);
+        }
+      }
+      // awning
+      const aw = document.createElement('div');
+      aw.style.cssText = `position:absolute;top:0;left:-2px;right:-2px;height:14px;background:${awning};border-radius:3px 3px 0 0;`;
+      b.appendChild(aw);
+      // label emoji sign
+      const sign = document.createElement('div');
+      sign.style.cssText = `position:absolute;bottom:4px;left:0;right:0;text-align:center;font-size:16px;line-height:1;`;
+      sign.textContent = label;
+      b.appendChild(sign);
+      bgEl.appendChild(b);
+    });
+    // Market banner string
+    const banner = document.createElement('div');
+    banner.style.cssText = 'position:absolute;top:4px;left:0;right:0;text-align:center;font-size:10px;font-weight:bold;color:#5D4037;letter-spacing:1px;background:rgba(255,255,255,0.55);padding:2px 0;border-radius:4px;';
+    banner.textContent = '🏪 MARKET SQUARE';
+    bgEl.appendChild(banner);
+  } else if (loc === 'festival') {
+    // Festival Grounds — colourful tents + bunting
+    const tents = [
+      { x:0,  w:70, c1:'#E53935', c2:'#EF9A9A' },
+      { x:72, w:60, c1:'#FFD600', c2:'#FFF176' },
+      { x:136,w:68, c1:'#1565C0', c2:'#90CAF9' },
+    ];
+    tents.forEach(({ x, w, c1, c2 }) => {
+      const tent = document.createElement('div');
+      tent.style.cssText = `position:absolute;left:${x}px;bottom:0;width:${w}px;height:52px;`;
+      // tent body (striped)
+      const body = document.createElement('div');
+      const stripeCount = 5;
+      const sw = w / stripeCount;
+      for (let i = 0; i < stripeCount; i++) {
+        const stripe = document.createElement('div');
+        stripe.style.cssText = `position:absolute;left:${i * sw}px;top:14px;width:${sw}px;bottom:0;background:${i % 2 === 0 ? c1 : c2};`;
+        tent.appendChild(stripe);
+      }
+      // tent roof (triangle via clip-path)
+      const roof = document.createElement('div');
+      roof.style.cssText = `position:absolute;top:0;left:0;width:${w}px;height:26px;background:${c1};clip-path:polygon(50% 0%,0% 100%,100% 100%);`;
+      tent.appendChild(roof);
+      bgEl.appendChild(tent);
+    });
+    // Bunting string
+    const bunting = document.createElement('div');
+    bunting.style.cssText = 'position:absolute;top:2px;left:0;right:0;height:18px;pointer-events:none;';
+    const bColors = ['#E53935','#FFD700','#4CAF50','#2196F3','#E91E63','#FF9800','#9C27B0','#00BCD4'];
+    for (let i = 0; i < 16; i++) {
+      const flag = document.createElement('div');
+      flag.style.cssText = `position:absolute;left:${i * 14 + 2}px;top:3px;width:12px;height:12px;background:${bColors[i % 8]};clip-path:polygon(50% 0%,0% 100%,100% 100%);`;
+      bunting.appendChild(flag);
+    }
+    bgEl.appendChild(bunting);
+    // Stars / sparkle dots
+    [[20,35],[80,25],[145,38],[195,28]].forEach(([x,y]) => {
+      const star = document.createElement('div');
+      star.style.cssText = `position:absolute;left:${x}px;top:${y}px;font-size:13px;animation:starTwinkle 1.5s ease-in-out infinite alternate;`;
+      star.textContent = '✨';
+      bgEl.appendChild(star);
+    });
+    if (!document.getElementById('festival-style')) {
+      const s = document.createElement('style');
+      s.id = 'festival-style';
+      s.textContent = '@keyframes starTwinkle{from{opacity:0.4;transform:scale(0.8)}to{opacity:1;transform:scale(1.1)}}';
+      document.head.appendChild(s);
+    }
+  } else if (loc === 'airport') {
+    // Airport Terminal — terminal building, control tower, plane
+    // Terminal building
+    const terminal = document.createElement('div');
+    terminal.style.cssText = 'position:absolute;left:0;bottom:0;width:160px;height:65px;background:#E0E0E0;border:1.5px solid #BDBDBD;border-radius:4px 4px 0 0;';
+    for (let wx = 8; wx < 150; wx += 18) {
+      const win = document.createElement('div');
+      win.style.cssText = `position:absolute;left:${wx}px;top:14px;width:10px;height:30px;background:#AEE0F7;border:1px solid #90CAF9;border-radius:2px;`;
+      terminal.appendChild(win);
+    }
+    const sign = document.createElement('div');
+    sign.style.cssText = 'position:absolute;top:4px;left:0;right:0;text-align:center;font-size:9px;font-weight:bold;color:#37474F;letter-spacing:1px;';
+    sign.textContent = '✈ TERMINAL';
+    terminal.appendChild(sign);
+    bgEl.appendChild(terminal);
+    // Control tower
+    const tower = document.createElement('div');
+    tower.style.cssText = 'position:absolute;left:165px;bottom:0;width:26px;height:80px;background:#CFD8DC;border:1.5px solid #B0BEC5;border-radius:3px 3px 0 0;';
+    const cab = document.createElement('div');
+    cab.style.cssText = 'position:absolute;top:-12px;left:-5px;width:36px;height:14px;background:#78909C;border-radius:3px 3px 0 0;border:1px solid #546E7A;';
+    const cabWin = document.createElement('div');
+    cabWin.style.cssText = 'position:absolute;top:2px;left:4px;right:4px;height:8px;background:#AEE0F7;border-radius:2px;opacity:0.9;';
+    cab.appendChild(cabWin);
+    tower.appendChild(cab);
+    bgEl.appendChild(tower);
+    // Plane silhouette flying across
+    const plane = document.createElement('div');
+    plane.style.cssText = 'position:absolute;top:8px;left:-30px;font-size:22px;animation:planeFly 7s linear infinite;';
+    plane.textContent = '✈️';
+    bgEl.appendChild(plane);
+    // Runway stripe on ground
+    const runway = document.createElement('div');
+    runway.style.cssText = 'position:absolute;bottom:2px;left:0;right:0;height:5px;display:flex;gap:10px;padding:0 6px;align-items:center;';
+    for (let i = 0; i < 10; i++) {
+      const dash = document.createElement('div');
+      dash.style.cssText = 'flex:1;height:3px;background:rgba(255,255,255,0.6);border-radius:1px;';
+      runway.appendChild(dash);
+    }
+    bgEl.appendChild(runway);
+    if (!document.getElementById('airport-style')) {
+      const s = document.createElement('style');
+      s.id = 'airport-style';
+      s.textContent = '@keyframes planeFly{0%{left:-30px;opacity:0}10%{opacity:1}90%{opacity:1}100%{left:115%;opacity:0}}';
+      document.head.appendChild(s);
+    }
   } else {
     [[15,55],[60,65],[120,50],[185,60]].forEach(([x,h]) => {
       const tree = document.createElement('div');
@@ -981,17 +1110,6 @@ function _buildScene(ids) {
       tree.appendChild(c1); tree.appendChild(c2); tree.appendChild(tr);
       bgEl.appendChild(tree);
     });
-    if (loc === 'festival') {
-      const flags = document.createElement('div');
-      flags.style.cssText = 'position:absolute;top:5px;left:0;right:0;height:20px;pointer-events:none;';
-      const colors = ['#E53935','#FFD700','#4CAF50','#2196F3','#E91E63','#FF9800'];
-      for (let i=0;i<12;i++) {
-        const f = document.createElement('div');
-        f.style.cssText = `position:absolute;left:${i*18+2}px;top:2px;width:14px;height:14px;background:${colors[i%6]};clip-path:polygon(50% 0%,0% 100%,100% 100%);transform:rotate(${(i%2)*180}deg);`;
-        flags.appendChild(f);
-      }
-      bgEl.appendChild(flags);
-    }
   }
 
   // Clouds — scoped to this scene container

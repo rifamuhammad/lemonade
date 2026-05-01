@@ -1482,8 +1482,8 @@ function initEvents() {
   document.querySelectorAll('.nav-btn').forEach(btn => {
     btn.addEventListener('click', () => {
       if (S.phase === 'selling') return;
-      // During result phase, Day tab re-shows the result (prevents re-opening stand same day)
-      if (S.phase === 'result' && btn.dataset.screen === 'day') {
+      // During result phase, all nav locked — redirect to result screen
+      if (S.phase === 'result') {
         SFX.tap();
         showScreen('result');
         return;

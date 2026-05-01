@@ -227,7 +227,7 @@ function getServingConfig() {
   if (u.dispenser) servingTimeMs = Math.round(servingTimeMs * 0.48);
   if (hired.lady) servingTimeMs = Math.round(servingTimeMs * 0.68);
 
-  let patienceMs = 2800;
+  let patienceMs = 1500;
   if (u.soundsystem) patienceMs = Math.round(patienceMs * 1.65);
   if (hired.musician) patienceMs = Math.round(patienceMs * 1.45);
 
